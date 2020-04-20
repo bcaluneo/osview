@@ -4,9 +4,13 @@
 #ifndef TIME_HH
 #define TIME_HH
 
+#define percent(a, b) a*100 / b
+
 extern bool quit;
 extern const int POLL_TIME;
 
+// TODO: Since we're only using the lower part of the DWORD for the FILETIME
+// there's no reason to do the whole 64-bit operation.
 void GetFileTime(FILETIME &result, const FILETIME &start, const FILETIME &end) {
 	ULARGE_INTEGER largeStart = { 0 };
 	largeStart.LowPart = start.dwLowDateTime;
@@ -17,10 +21,6 @@ void GetFileTime(FILETIME &result, const FILETIME &start, const FILETIME &end) {
 	largeStart.QuadPart = largeEnd.QuadPart - largeStart.QuadPart;
 	result.dwLowDateTime = largeStart.LowPart;
 	result.dwHighDateTime = largeStart.HighPart;
-}
-
-double percent(double a, double b) {
-	return a*100 / b;
 }
 
 int getData(void *data) {
@@ -47,12 +47,14 @@ int getData(void *data) {
 		double total = (kernelTime+userTime); // ker + idl + usr
 		double cpu = (kernelTime+userTime-idleTime)*100 / total;
 
+		double actKernel = kernelTime - idleTime;
+
 		ret[0] = percent(idleTime, total);
-		ret[1] = percent(kernelTime - idleTime, total);
+		ret[1] = percent(actKernel, total);
 		ret[2] = percent(userTime, total);
 
 		printf("%.2f\t%.2f\t%.2f\t%.2f\r", cpu, percent(idleTime, total),
-																						percent(kernelTime-idleTime, total),
+																						percent(actKernel, total),
 																						percent(userTime, total));
 	}
 
