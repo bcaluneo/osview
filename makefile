@@ -15,7 +15,7 @@ rel:
 	$(CC) src/$(OBJS) $(FLAGS) -Wl,--subsystem,windows -o $(EXE)
 
 zip:
-	tar -cvf "$(EXE)".tar *.dll *.exe
+	tar -cvf "$(EXE)".tar *.dll *.exe tex/*.png
 
 clean:
 	rm -f *.exe
