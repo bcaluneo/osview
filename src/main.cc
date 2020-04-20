@@ -20,38 +20,39 @@ bool quit = 0;
 
 SDL_Window *window = nullptr;
 SDL_Renderer *render = nullptr;
+std::vector<std::tuple<double, double, double>> bands;
 
 template <typename T>
 void redraw(double data[3], bool graph, std::vector<T> &bands) {
 	SDL_Rect usrRect, kerRect, idlRect;
 
 	if (graph) {
-		for (auto it = bands.begin(); it != bands.end(); it++) {
-			size_t pos = it-bands.begin();
-			auto t = *it;
-
-			double usrData = std::get<2>(t);
-			double kerData = std::get<1>(t);
-			double idlData = std::get<0>(t);
-
-			usrRect.x = BAR_X + pos*BAND_WIDTH;
-			kerRect.x = BAR_X + pos*BAND_WIDTH;
-			idlRect.x = BAR_X + pos*BAND_WIDTH;
-			usrRect.w = kerRect.w = idlRect.w = BAND_WIDTH;
-			usrRect.h = BAR_HEIGHT * (usrData/100);
-			kerRect.h = BAR_HEIGHT * (kerData/100);
-			idlRect.h = BAR_HEIGHT * (idlData/100);
-			usrRect.y = BAR_Y + BAR_HEIGHT - usrRect.h;
-			kerRect.y = usrRect.y - kerRect.h;
-			idlRect.y = kerRect.y - idlRect.h;
-
-			SDL_SetRenderDrawColor(render, 0, 148, 255, 255);
-			SDL_RenderFillRect(render, &usrRect);
-			SDL_SetRenderDrawColor(render, 255, 0, 0, 255);
-			SDL_RenderFillRect(render, &kerRect);
-			SDL_SetRenderDrawColor(render, 0, 255, 0, 255);
-			SDL_RenderFillRect(render, &idlRect);
-		}
+		// for (auto it = bands.begin(); it != bands.end(); it++) {
+		// 	auto pos = it-bands.begin();
+		// 	auto t = *it;
+		//
+		// 	double usrData = std::get<2>(t);
+		// 	double kerData = std::get<1>(t);
+		// 	double idlData = std::get<0>(t);
+		//
+		// 	usrRect.x = BAR_X + pos*BAND_WIDTH;
+		// 	kerRect.x = BAR_X + pos*BAND_WIDTH;
+		// 	idlRect.x = BAR_X + pos*BAND_WIDTH;
+		// 	usrRect.w = kerRect.w = idlRect.w = BAND_WIDTH;
+		// 	usrRect.h = BAR_HEIGHT * (usrData/100);
+		// 	kerRect.h = BAR_HEIGHT * (kerData/100);
+		// 	idlRect.h = BAR_HEIGHT * (idlData/100);
+		// 	usrRect.y = BAR_Y + BAR_HEIGHT - usrRect.h;
+		// 	kerRect.y = usrRect.y - kerRect.h;
+		// 	idlRect.y = kerRect.y - idlRect.h;
+		//
+		// 	SDL_SetRenderDrawColor(render, 0, 148, 255, 255);
+		// 	SDL_RenderFillRect(render, &usrRect);
+		// 	SDL_SetRenderDrawColor(render, 255, 0, 0, 255);
+		// 	SDL_RenderFillRect(render, &kerRect);
+		// 	SDL_SetRenderDrawColor(render, 0, 255, 0, 255);
+		// 	SDL_RenderFillRect(render, &idlRect);
+		// }
 	} else {
 		usrRect.x = BAR_X;
 		usrRect.w = BAR_WIDTH * (data[2] / 100);
@@ -103,9 +104,6 @@ int main(int argc, char **args) {
 	double data[3] = {0.0, 0.0, 0.0};
 	SDL_CreateThread(getData, "Print Thread", (void *) data);
 
-	// I'm not sure if this is a good way to do this.
-	std::vector<std::tuple<double, double, double>> bands;
-
 	SDL_Event event;
 	bool graph = 0;
 	while (!quit) {
@@ -140,9 +138,6 @@ int main(int argc, char **args) {
 		bar.h = BAR_HEIGHT + 2 + 10;
 		SDL_RenderCopy(render, tex, NULL, &bg);
 		SDL_RenderCopy(render, tex2, NULL, &bar);
-
-		bands.push_back(std::make_tuple(data[0], data[1], data[2]));
-		if (bands.size() > BAR_WIDTH / BAND_WIDTH) bands.clear();
 
 		redraw(data, graph, bands);
 		SDL_RenderPresent(render);

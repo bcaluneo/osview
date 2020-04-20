@@ -19,3 +19,4 @@ zip:
 
 clean:
 	rm -f *.exe
+	rm -f *.tar

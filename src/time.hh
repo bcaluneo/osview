@@ -1,5 +1,7 @@
 #include <cstdint>
 #include <cstdio>
+#include <tuple>
+#include <vector>
 
 #ifndef TIME_HH
 #define TIME_HH
@@ -7,7 +9,9 @@
 #define percent(a, b) a*100 / b
 
 extern bool quit;
-extern const int POLL_TIME;
+extern const int POLL_TIME, BAND_WIDTH, BAR_WIDTH;
+extern std::vector<std::tuple<double,double,double>> bands;
+size_t totalBands = BAR_WIDTH / BAND_WIDTH;
 
 // TODO: Since we're only using the lower part of the DWORD for the FILETIME
 // there's no reason to do the whole 64-bit operation.
@@ -52,6 +56,9 @@ int getData(void *data) {
 		ret[0] = percent(idleTime, total);
 		ret[1] = percent(actKernel, total);
 		ret[2] = percent(userTime, total);
+
+		bands.push_back(std::make_tuple(ret[0], ret[1], ret[2]));
+		if (bands.size() > totalBands) bands.clear();
 
 		printf("%.2f\t%.2f\t%.2f\t%.2f\r", cpu, percent(idleTime, total),
 																						percent(actKernel, total),

@@ -16,7 +16,8 @@ Here is a screenshot of my tool as it stands: <br/>
 ![Screenshot of osview](screenshots/prev.png)
 <br/>
 This tool uses the win32 api library in order to measure system resource
-usage time over a period of approximately one second. Specifically, it measures the amount of time the system has been executing threads in kernel mode, user mode, and the amount of time that it has spent idling. More information can be found in the Windows Dev Center; specifically, [here](https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getsystemtimes). All the rendering is handled using the SDL2 library.
+usage time over a period defined in the main program. Specifically, it measures the amount of time the system has been executing tasks in kernel mode, user mode, and the amount of time that it has spent idling. More information can be found in the Windows Dev Center; specifically, [here](https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getsystemtimes). All the rendering is handled using the SDL2 library.
+Because this program uses the win32 api it is only compatible with Windows.
 
 ## Usage
 
