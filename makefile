@@ -8,11 +8,11 @@ FLAGS += -lmingw32 -lSDL2main -lSDL2
 
 OBJS = main.cc
 
-r:
-	$(CC) src/$(OBJS) $(FLAGS) -Wl,--subsystem,windows -o $(EXE)
+default:
+	$(CC) src/$(OBJS) $(FLAGS) -o $(EXE)
 
-d:
-	$(CC) src/$(OBJS) $(FLAGS) -o sdltest
+rel:
+	$(CC) src/$(OBJS) $(FLAGS) -Wl,--subsystem,windows -o $(EXE)
 
 zip:
 	tar -cvf "$(EXE)".tar *.dll *.exe

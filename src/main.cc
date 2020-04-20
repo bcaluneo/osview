@@ -4,206 +4,151 @@
 #include "SDL.h"
 #include "SDL_thread.h"
 #include <cstdio>
+#include <cstdint>
 #include <string>
 #include <iostream>
 
-//Screen dimension constants
-const int SCREEN_WIDTH = 640;
-const int SCREEN_HEIGHT = 480;
+const int SCREEN_WIDTH = 780;
+const int SCREEN_HEIGHT = 120;
+const int BAR_X = 15;
+const int BAR_Y = 25;
+const int BAR_WIDTH = SCREEN_WIDTH - (BAR_X*2);
+const int BAR_HEIGHT = 65;
+const int POLL_TIME = 500;
 
-// Threads need to see this.
 static bool quit = 0;
 
-enum KeyPressSurfaces {
-	KEY_PRESS_SURFACE_DEFAULT,
-	KEY_PRESS_SURFACE_UP,
-	KEY_PRESS_SURFACE_DOWN,
-	KEY_PRESS_SURFACE_LEFT,
-	KEY_PRESS_SURFACE_RIGHT,
-	KEY_PRESS_SURFACE_TOTAL,
-};
+SDL_Window *window = nullptr;
+SDL_Renderer *render = nullptr;
 
-static float CalculateCPULoad(unsigned long long idleTicks, unsigned long long totalTicks)
-{
-   static unsigned long long _previousTotalTicks = 0;
-   static unsigned long long _previousIdleTicks = 0;
+void GetFileTime(FILETIME &result, const FILETIME &start, const FILETIME &end) {
+	ULARGE_INTEGER largeStart = { 0 };
+	largeStart.LowPart = start.dwLowDateTime;
+	largeStart.HighPart = start.dwHighDateTime;
 
-   unsigned long long totalTicksSinceLastTime = totalTicks-_previousTotalTicks;
-   unsigned long long idleTicksSinceLastTime  = idleTicks-_previousIdleTicks;
+	ULARGE_INTEGER largeEnd = { 0 };
+	largeEnd.LowPart = end.dwLowDateTime;
+	largeEnd.HighPart = end.dwHighDateTime;
 
-   float ret = 1.0f-((totalTicksSinceLastTime > 0) ? ((float)idleTicksSinceLastTime)/totalTicksSinceLastTime : 0);
+	largeStart.QuadPart = largeEnd.QuadPart - largeStart.QuadPart;
 
-   _previousTotalTicks = totalTicks;
-   _previousIdleTicks  = idleTicks;
-   return ret;
+	result.dwLowDateTime = largeStart.LowPart;
+	result.dwHighDateTime = largeStart.HighPart;
 }
 
-static unsigned long long FileTimeToInt64(const FILETIME & ft) {return (((unsigned long long)(ft.dwHighDateTime))<<32)|((unsigned long long)ft.dwLowDateTime);}
-
-// Returns 1.0f for "CPU fully pinned", 0.0f for "CPU idle", or somewhere in between
-// You'll need to call this at regular intervals, since it measures the load between
-// the previous call and the current one.  Returns -1.0 on error.
-float GetCPULoad()
-{
-   FILETIME idleTime, kernelTime, userTime;
-   return GetSystemTimes(&idleTime, &kernelTime, &userTime) ? CalculateCPULoad(FileTimeToInt64(idleTime), FileTimeToInt64(kernelTime)+FileTimeToInt64(userTime)) : -1.0f;
+double percent(double a, double b) {
+	return a*100 / b;
 }
 
-bool init();
-bool loadMedia();
-void close();
-SDL_Surface *loadSurface(std::string);
-
-SDL_Window *window = NULL;
-SDL_Surface *gScreenSurface = NULL;
-SDL_Surface *current = NULL;
-SDL_Surface *surfaces[KEY_PRESS_SURFACE_TOTAL];
-
-int printCPULoad(void *data)
+int getData(void *data)
 {
+	printf("CPU:\tIdl:\tKer:\tUsr:\n");
+
+	double *ret = static_cast<double*>(data);
+
 	while (!quit) {
-		float load = GetCPULoad()*100;
-		std::cout << load << "\n";
-		SDL_Delay(250);
+		FILETIME a0, a1, a2, b0, b1, b2;
+		GetSystemTimes(&a0, &a1, &a2);
+		SDL_Delay(POLL_TIME);
+		GetSystemTimes(&b0, &b1, &b2);
+
+		FILETIME finalIdle, finalKernel, finalUser;
+
+		GetFileTime(finalIdle, a0, b0);
+		GetFileTime(finalKernel, a1, b1);
+		GetFileTime(finalUser, a2, b2);
+
+		double idleTime, kernelTime, userTime;
+
+		idleTime = finalIdle.dwLowDateTime;
+		kernelTime = finalKernel.dwLowDateTime;
+		userTime = finalUser.dwLowDateTime;
+
+		double total = (kernelTime+userTime); // ker + idl + usr
+
+		// idle time is removed because the cpu can't be utilized if it's idle.
+		// kernel time includes idle time so it's still included in the total time
+		// because we're looking at the utilization time over the total time.
+		// this number is different from what appears in task manager
+		// but it's similar to the cpu usage in speedfan.
+		// this leads me to believe that task manager only shows %usr in the
+		// performance tab and speedfun looks at the usage over a period of a 1000
+		// using the cpu time similar to what i've done.
+		double cpu = (kernelTime+userTime-idleTime)*100 / total;
+
+		ret[0] = percent(idleTime, total);
+		ret[1] = percent(kernelTime - idleTime, total);
+		ret[2] = percent(userTime, total);
+
+		printf("%.2f\t%.2f\t%.2f\t%.2f\r", cpu, percent(idleTime, total), percent(kernelTime-idleTime, total), percent(userTime, total));
 	}
 
 	return 0;
 }
 
-int main( int argc, char* args[] )
-{
-	if(!init())
-	{
-		printf( "SDL could not initialize! SDL_Error: %s\n", SDL_GetError() );
-	}
-	else
-	{
-		if(!loadMedia())
-		{
-			printf( "Failed to load media. \n");
-		}
-		else
-		{
-			current = surfaces[KEY_PRESS_SURFACE_DEFAULT];
-      SDL_BlitSurface(current, NULL, gScreenSurface, NULL);
+void redraw(double data[3]) {
+	SDL_Rect usrRect;
+	usrRect.x = BAR_X;
+	usrRect.w = BAR_WIDTH * (data[2] / 100);
+	usrRect.y = BAR_Y;
+	usrRect.h = BAR_HEIGHT;
 
-      SDL_Event event;
+	SDL_Rect kerRect;
+	kerRect.x = BAR_X + usrRect.w;
+	kerRect.y = BAR_Y;
+	kerRect.w = BAR_WIDTH * (data[1] / 100);
+	kerRect.h = BAR_HEIGHT;
 
-			SDL_Thread *printThread = SDL_CreateThread(printCPULoad, "Print Thread", (void *)NULL);
+	SDL_Rect idlRect;
+	idlRect.x = kerRect.x + kerRect.w;
+	idlRect.y = BAR_Y;
+	idlRect.w = BAR_WIDTH * (data[0] / 100);
+	idlRect.h = BAR_HEIGHT;
 
-      while (!quit) {
-        if (SDL_PollEvent(&event)) {
-          switch (event.type) {
-						case SDL_QUIT:
-							quit = 1;
+	SDL_SetRenderDrawColor(render, 0, 0, 255, 255);
+	SDL_RenderFillRect(render, &usrRect);
+	SDL_SetRenderDrawColor(render, 255, 0, 0, 255);
+	SDL_RenderFillRect(render, &kerRect);
+	SDL_SetRenderDrawColor(render, 0, 255, 0, 255);
+	SDL_RenderFillRect(render, &idlRect);
+}
+
+int main(int argc, char **args) {
+	SDL_Init(SDL_INIT_VIDEO);
+
+	window = SDL_CreateWindow("osview", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+	render = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
+	SDL_SetRenderDrawColor(render, 180, 180, 180, 255);
+	SDL_RenderClear(render);
+
+	double data[3] = {0.0, 0.0, 0.0};
+	SDL_CreateThread(getData, "Print Thread", (void *) data);
+
+	SDL_Event event;
+  while (!quit) {
+    if (SDL_PollEvent(&event)) {
+      switch (event.type) {
+				case SDL_QUIT:
+					quit = 1;
+					break;
+        case SDL_KEYDOWN:
+          switch (event.key.keysym.sym) {
+            case SDLK_ESCAPE:
+              quit = 1;
 							break;
-            case SDL_KEYDOWN:
-              switch (event.key.keysym.sym) {
-                case SDLK_ESCAPE:
-                  quit = 1;
-									break;
-								case SDLK_UP:
-									current = surfaces[KEY_PRESS_SURFACE_UP];
-									break;
-								case SDLK_DOWN:
-									current = surfaces[KEY_PRESS_SURFACE_DOWN];
-									break;
-								case SDLK_LEFT:
-									current = surfaces[KEY_PRESS_SURFACE_LEFT];
-									break;
-								case SDLK_RIGHT:
-									current = surfaces[KEY_PRESS_SURFACE_RIGHT];
-									break;
-              }
-
-              break;
           }
-        }
 
-				SDL_BlitSurface(current, NULL, gScreenSurface, NULL);
-        SDL_UpdateWindowSurface(window);
-
-				SDL_Delay(5);
+          break;
       }
+    }
 
-			SDL_WaitThread(printThread, NULL);
-		}
-	}
+		redraw(data);
+		SDL_RenderPresent(render);
+		SDL_Delay(20);
+  }
 
-  close();
+	printf("\n");
+  SDL_Quit();
 
   return 0;
-}
-
-bool init() {
-  bool result = 1;
-
-  if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-    printf("error init(): sdl failed to initialize with error %s\n", SDL_GetError());
-    result = 0;
-  } else {
-    window = SDL_CreateWindow("osview", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
-
-    if (window == NULL) {
-      printf("error init(): window could nto be created with error %s\n", SDL_GetError());
-      result = 0;
-    } else {
-      gScreenSurface = SDL_GetWindowSurface(window);
-    }
-  }
-
-  return result;
-}
-
-bool loadMedia() {
-  bool result = 1;
-
-	surfaces[KEY_PRESS_SURFACE_DEFAULT] = loadSurface("bitmaps/def.bmp");
-  if (surfaces[KEY_PRESS_SURFACE_DEFAULT] == NULL) {
-    printf("error loadMedia(): unable to load image with error %s\n", SDL_GetError());
-    result = 0;
-  }
-
-	surfaces[KEY_PRESS_SURFACE_UP] = loadSurface("bitmaps/up.bmp");
-	if (surfaces[KEY_PRESS_SURFACE_UP] == NULL) {
-		printf("error loadMedia(): unable to load image with error %s\n", SDL_GetError());
-		result = 0;
-	}
-
-	surfaces[KEY_PRESS_SURFACE_DOWN] = loadSurface("bitmaps/down.bmp");
-	if (surfaces[KEY_PRESS_SURFACE_DOWN] == NULL) {
-		printf("error loadMedia(): unable to load image with error %s\n", SDL_GetError());
-		result = 0;
-	}
-
-	surfaces[KEY_PRESS_SURFACE_LEFT] = loadSurface("bitmaps/left.bmp");
-	if (surfaces[KEY_PRESS_SURFACE_LEFT] == NULL) {
-		printf("error loadMedia(): unable to load image with error %s\n", SDL_GetError());
-		result = 0;
-	}
-
-	surfaces[KEY_PRESS_SURFACE_RIGHT] = loadSurface("bitmaps/right.bmp");
-	if (surfaces[KEY_PRESS_SURFACE_RIGHT] == NULL) {
-		printf("error loadMedia(): unable to load image with error %s\n", SDL_GetError());
-		result = 0;
-	}
-
-  return result;
-}
-
-SDL_Surface *loadSurface(std::string path) {
-		SDL_Surface *result = SDL_LoadBMP(path.c_str());
-		if (result == NULL) {
-			printf("error loadSurface(std::string): unable to load image with error %s\n", SDL_GetError());
-		}
-
-		return result;
-}
-
-void close() {
-	for (auto i = 0; i < KEY_PRESS_SURFACE_TOTAL; i++) {
-		SDL_FreeSurface(surfaces[i]);
-	}
-
-  SDL_Quit();
 }
