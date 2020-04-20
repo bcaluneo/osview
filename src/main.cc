@@ -1,8 +1,8 @@
 #define _WIN32_WINNT 0x0501
 #include <Windows.h>
-
 #include "SDL.h"
 #include "SDL_thread.h"
+#include "SDL_image.h"
 #include <cstdio>
 #include <cstdint>
 #include <string>
@@ -12,7 +12,7 @@
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 120;
 const int BAR_X = 15;
-const int BAR_Y = 25;
+const int BAR_Y = 40;
 const int BAR_WIDTH = SCREEN_WIDTH - (BAR_X*2);
 const int BAR_HEIGHT = 50;
 const int POLL_TIME = 500;
@@ -73,11 +73,11 @@ int getData(void *data) {
 }
 
 void redraw(double data[3]) {
-	SDL_Rect bg;
-	bg.x = BAR_X-1;
-	bg.y = BAR_Y-1;
-	bg.w = BAR_WIDTH + 2;
-	bg.h = BAR_HEIGHT + 2;
+	SDL_Rect bar;
+	bar.x = BAR_X-1;
+	bar.y = BAR_Y-1;
+	bar.w = BAR_WIDTH + 2;
+	bar.h = BAR_HEIGHT + 2;
 
 	SDL_Rect usrRect;
 	usrRect.x = BAR_X;
@@ -98,7 +98,7 @@ void redraw(double data[3]) {
 	idlRect.h = BAR_HEIGHT;
 
 	SDL_SetRenderDrawColor(render, 0, 0, 0, 255);
-	SDL_RenderFillRect(render, &bg);
+	SDL_RenderFillRect(render, &bar);
 	SDL_SetRenderDrawColor(render, 0, 0, 255, 255);
 	SDL_RenderFillRect(render, &usrRect);
 	SDL_SetRenderDrawColor(render, 255, 0, 0, 255);
@@ -109,9 +109,15 @@ void redraw(double data[3]) {
 
 int main(int argc, char **args) {
 	SDL_Init(SDL_INIT_VIDEO);
+	IMG_Init(IMG_INIT_PNG);
 
 	window = SDL_CreateWindow("osview", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
 	render = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
+
+	SDL_Surface *surface = IMG_Load("tex/bg.png");
+	SDL_Texture *tex = SDL_CreateTextureFromSurface(render, surface);
+	SDL_FreeSurface(surface);
+
 	SDL_SetRenderDrawColor(render, 180, 180, 180, 255);
 	SDL_RenderClear(render);
 	double data[3] = {0.0, 0.0, 0.0};
@@ -129,14 +135,21 @@ int main(int argc, char **args) {
 					quit = 1;
 					break;
 				}
-				
+
 				break;
 			}
 		}
 
+		SDL_Rect bg;
+		bg.x = 0;
+		bg.y = 0;
+		bg.w = SCREEN_WIDTH;
+		bg.h = SCREEN_HEIGHT;
+		SDL_RenderCopy(render, tex, NULL, &bg);
+
 		redraw(data);
 		SDL_RenderPresent(render);
-		SDL_Delay(20);
+		SDL_Delay(1000/60);
 	}
 
 	printf("\n");

@@ -4,7 +4,7 @@ EXE = osview
 FLAGS = -std=c++11
 FLAGS += -Wall
 FLAGS += -ID:\SDL\include\SDL2 -LD:\SDL\lib
-FLAGS += -lmingw32 -lSDL2main -lSDL2
+FLAGS += -lmingw32 -lSDL2main -lSDL2 -lSDL2_image
 
 OBJS = main.cc
 
