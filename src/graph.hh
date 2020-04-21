@@ -28,10 +28,11 @@ class Graph {
     void toggleVertical();
 
   private:
-    bool vertical = 0;
+    bool vertical;
+    size_t currBandPos;
     size_t _dataCount;
     SDL_Rect *rects, **rects2;
-    std::vector<double*> *bands;
+    double **bands;
     std::vector<int*> colors;
 };
 

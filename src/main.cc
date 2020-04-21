@@ -15,7 +15,7 @@ const int BAR_Y = 40;
 const int BAR_SCALE = 4;
 const int BAR_WIDTH = SCREEN_WIDTH - (BAR_X*2);
 const int BAR_HEIGHT = 50;
-const int POLL_TIME = 500;
+const int POLL_TIME = 200;
 const int BAND_WIDTH = 5;
 
 bool quit = 0;

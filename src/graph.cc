@@ -1,13 +1,19 @@
 #include "graph.hh"
 #include <iostream>
 
-Graph::Graph(size_t dataCount, size_t scale) : _dataCount(dataCount) {
+Graph::Graph(size_t dataCount, size_t scale) : _dataCount(dataCount), vertical(0), currBandPos(0) {
   rects = new SDL_Rect[dataCount];
   rects2 = new SDL_Rect*[TOTAL_BANDS];
+  bands = new double*[TOTAL_BANDS];
 
-  bands = new std::vector<double*>();
+  for (size_t i = 0; i < TOTAL_BANDS; i++) {
+    bands[i] = new double[dataCount];
 
-  bands->reserve(TOTAL_BANDS);
+    for (size_t j = 0; j < dataCount; j++) {
+      bands[i][j] = 0.0;
+    }
+  }
+
   colors.reserve(dataCount);
 
   for (size_t i = 0; i < dataCount; i++) {
@@ -19,43 +25,52 @@ Graph::Graph(size_t dataCount, size_t scale) : _dataCount(dataCount) {
   for (size_t i = 0; i < TOTAL_BANDS; i++) {
     for (size_t j = 0; j < dataCount; j++) {
       rects2[i] = new SDL_Rect[3];
+    }
+  }
+
+  for (size_t i = 0; i < TOTAL_BANDS; i++) {
+    for (size_t j = 0; j < dataCount; j++) {
       rects2[i][j].w = BAND_WIDTH;
     }
   }
 }
 
 Graph::~Graph() {
-  for (size_t i = 0; i < _dataCount; i++) {
-    delete [] rects2[i];
+  for (size_t i = 0; i < TOTAL_BANDS; i++) {
+    delete [] bands[i];
+
+    for (size_t i = 0; i < _dataCount; i++) {
+      delete [] rects2[i];
+    }
   }
 
-  delete bands;
+  delete [] bands;
   delete [] rects;
   delete [] rects2;
 }
 
 void Graph::draw() {
   if (vertical) {
-    for (auto it = bands->begin(); it != bands->end(); it++) {
-      auto pos = it-bands->begin();
-
-      double *data = (*bands)[pos];
+    for (size_t i = 0; i < TOTAL_BANDS; i++) {
+      double *data = bands[i];
+      if (data[0] == 0 && data[1] == 0 && data[2] == 0) continue;
 
       double usrValue = data[0];
       double kerValue = data[1];
       double idlValue = data[2];
 
-      SDL_Rect &usrRect = rects2[pos][0];
-      SDL_Rect &kerRect = rects2[pos][1];
-      SDL_Rect &idlRect = rects2[pos][2];
+      SDL_Rect &usrRect = rects2[i][0];
+      SDL_Rect &kerRect = rects2[i][1];
+      SDL_Rect &idlRect = rects2[i][2];
 
-      usrRect.x = BAR_X + pos*BAND_WIDTH;
-      kerRect.x = BAR_X + pos*BAND_WIDTH;
-      idlRect.x = BAR_X + pos*BAND_WIDTH;
-      usrRect.w = kerRect.w = idlRect.w = BAND_WIDTH;
+      usrRect.x = BAR_X + i*BAND_WIDTH;
+      kerRect.x = BAR_X + i*BAND_WIDTH;
+      idlRect.x = BAR_X + i*BAND_WIDTH;
+
       usrRect.h = BAR_HEIGHT * (usrValue/100);
       kerRect.h = BAR_HEIGHT * (kerValue/100);
       idlRect.h = BAR_HEIGHT * (idlValue/100);
+
       usrRect.y = BAR_Y + BAR_HEIGHT - usrRect.h;
       kerRect.y = usrRect.y - kerRect.h;
       idlRect.y = kerRect.y - idlRect.h;
@@ -86,18 +101,18 @@ void Graph::updateSize(int index, double amount) {
 
   if (index == 1) rect.x = BAR_X + rects[0].w;
   if (index == 2) rect.x = rects[1].x + rects[1].w;
-
 }
 
 void Graph::insertBand(double *band) {
-  printf("%f\t%f\t%f\n", band[0], band[1], band[2]);
-
-  if (bands->size() >= TOTAL_BANDS) {
-  	// bands->insert(bands->begin(), band);
-  	// bands->erase(bands->end()-1);
-  } else {
-    bands->insert(bands->end(), band);
+  if (currBandPos >= TOTAL_BANDS) {
+    currBandPos = 0;
   }
+
+  for (size_t j = 0; j < _dataCount; j++) {
+    bands[currBandPos][j] = band[j];
+  }
+
+  currBandPos++;
 }
 
 void Graph::setColors(int colors[][3]) {

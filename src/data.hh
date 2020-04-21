@@ -54,14 +54,14 @@ int getData(void *data) {
 
 		double actKernel = kernelTime - idleTime;
 
-		double band[3] = {percent(userTime, total), percent(actKernel, total),
-											percent(idleTime, total)};
+		double band[3] = { percent(userTime, total), percent(actKernel, total),
+											 percent(idleTime, total) };
 
 		g[0].updateSize(0, percent(userTime, total));
 		g[0].updateSize(1, percent(actKernel, total));
 		g[0].updateSize(2, percent(idleTime, total));
 		g[0].insertBand(band);
-		
+
 		g[1].updateSize(0, double(memStatus.dwMemoryLoad));
 		g[1].updateSize(1, 100-double(memStatus.dwMemoryLoad));
 

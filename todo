@@ -1,1 +1,2 @@
 output usage over a certain period of time to a file
+fix the bug in the vertical mode where it's just displaying the same rect
