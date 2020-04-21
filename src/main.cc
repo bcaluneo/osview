@@ -15,7 +15,7 @@ const int BAR_Y = 40;
 const int BAR_SCALE = 4;
 const int BAR_WIDTH = SCREEN_WIDTH - (BAR_X*2);
 const int BAR_HEIGHT = 50;
-const int POLL_TIME = 200;
+const int POLL_TIME = 500;
 const int BAND_WIDTH = 5;
 
 bool quit = 0;
@@ -128,14 +128,15 @@ int main(int argc, char **args) {
 		{0, 255, 0}
 	};
 
-	int memColors[1][3] = {
+	int memColors[2][3] = {
 		{0, 128, 255},
+		{0, 255, 0}
 	};
 
 	Graph cpuGraph(3, 0);
 	cpuGraph.setColors(colors);
 
-	Graph memGraph(1, 1);
+	Graph memGraph(2, 1);
 	memGraph.setColors(memColors);
 
 	Graph graphs[2] = {cpuGraph, memGraph};
@@ -143,7 +144,6 @@ int main(int argc, char **args) {
 	SDL_CreateThread(getData, "Data Thread", static_cast<void*>(graphs));
 
 	SDL_Event event;
-	bool graph = 0;
 	while (!quit) {
 		if (SDL_PollEvent(&event)) {
 		switch (event.type) {
@@ -156,7 +156,7 @@ int main(int argc, char **args) {
 						quit = 1;
 						break;
 					case SDLK_h:
-						graph = 1 - graph;
+						cpuGraph.toggleVertical();
 						break;
 				}
 

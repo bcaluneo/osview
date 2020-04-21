@@ -18,18 +18,21 @@ const size_t TOTAL_BANDS = BAR_WIDTH / BAND_WIDTH;
 
 class Graph {
   public:
-    Graph(int dataCount, int scale);
+    Graph(size_t dataCount, size_t scale);
     ~Graph();
 
     void draw();
     void updateSize(int index, double amount);
+    void insertBand(double *band);
     void setColors(int colors[][3]);
+    void toggleVertical();
 
   private:
     bool vertical = 0;
-    int _dataCount;
-    std::pair<SDL_Rect, int*> *rects;
-    std::vector<double> bands;
+    size_t _dataCount;
+    SDL_Rect *rects, **rects2;
+    std::vector<double*> *bands;
+    std::vector<int*> colors;
 };
 
 #endif
