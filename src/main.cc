@@ -122,16 +122,25 @@ int main(int argc, char **args) {
 	SDL_SetRenderDrawColor(render, 180, 180, 180, 255);
 	SDL_RenderClear(render);
 
-	double data[4] = {0.0, 0.0, 0.0, 0.0};
 	int colors[3][3] = {
 		{0, 128, 255},
 		{255, 0, 0},
 		{0, 255, 0}
 	};
 
-	Graph g(3);
-	g.setColors(colors);
-	SDL_CreateThread(getData, "Data Thread", static_cast<void*>(&g));
+	int memColors[1][3] = {
+		{0, 128, 255},
+	};
+
+	Graph cpuGraph(3, 0);
+	cpuGraph.setColors(colors);
+
+	Graph memGraph(1, 1);
+	memGraph.setColors(memColors);
+
+	Graph graphs[2] = {cpuGraph, memGraph};
+
+	SDL_CreateThread(getData, "Data Thread", static_cast<void*>(graphs));
 
 	SDL_Event event;
 	bool graph = 0;
@@ -172,7 +181,9 @@ int main(int argc, char **args) {
 		SDL_RenderCopy(render, tex2, NULL, &bar);
 
 		// redraw(data, graph, bands);
-		g.draw();
+		cpuGraph.draw();
+		memGraph.draw();
+
 		SDL_RenderPresent(render);
 		SDL_Delay(1000/60);
 	}

@@ -14,11 +14,11 @@ extern const int BAR_WIDTH;
 extern const int BAR_HEIGHT;
 extern const int BAND_WIDTH;
 
-const int TOTAL_BANDS = BAR_WIDTH / BAND_WIDTH;
+const size_t TOTAL_BANDS = BAR_WIDTH / BAND_WIDTH;
 
 class Graph {
   public:
-    Graph(int dataCount);
+    Graph(int dataCount, int scale);
     ~Graph();
 
     void draw();

@@ -50,9 +50,9 @@ int getData(void *data) {
 
 		double actKernel = kernelTime - idleTime;
 
-		g->updateSize(0, percent(userTime, total));
-		g->updateSize(1, percent(actKernel, total));
-		g->updateSize(2, percent(idleTime, total));
+		g[0].updateSize(0, percent(userTime, total));
+		g[0].updateSize(1, percent(actKernel, total));
+		g[0].updateSize(2, percent(idleTime, total));
 
 		// ret[0] = percent(idleTime, total);
 		// ret[1] = percent(actKernel, total);
@@ -68,13 +68,13 @@ int getData(void *data) {
 		MEMORYSTATUSEX memStatus;
 		memStatus.dwLength = sizeof (memStatus);
 	  GlobalMemoryStatusEx(&memStatus);
-
+		g[1].updateSize(0, double(memStatus.dwMemoryLoad));
 		// ret[3] = double(memStatus.dwMemoryLoad);
 
-		// printf("%.2f\t%.2f\t%.2f\t%.2f\t%.2f\r", cpu, percent(idleTime, total),
-		// 																				percent(actKernel, total),
-		// 																				percent(userTime, total),
-		// 																				double(memStatus.dwMemoryLoad));
+		printf("%.2f\t%.2f\t%.2f\t%.2f\t%.2f\r", cpu, percent(idleTime, total),
+																						percent(actKernel, total),
+																						percent(userTime, total),
+																						double(memStatus.dwMemoryLoad));
 	}
 
 	return 0;
