@@ -1,7 +1,7 @@
 #include "graph.hh"
 #include <iostream>
 
-Graph::Graph(size_t dataCount, size_t scale) : _dataCount(dataCount), vertical(0), currBandPos(0) {
+Graph::Graph(size_t dataCount, size_t scale) : _dataCount(dataCount) {
   rects = new SDL_Rect[dataCount];
   rects2 = new SDL_Rect*[TOTAL_BANDS];
   bands = new double*[TOTAL_BANDS];
@@ -44,6 +44,7 @@ Graph::~Graph() {
     }
   }
 
+
   delete [] bands;
   delete [] rects;
   delete [] rects2;
@@ -55,32 +56,21 @@ void Graph::draw() {
       double *data = bands[i];
       if (data[0] == 0 && data[1] == 0 && data[2] == 0) continue;
 
-      double usrValue = data[0];
-      double kerValue = data[1];
-      double idlValue = data[2];
+      for (size_t j = 0; j < _dataCount; j++) {
+        SDL_Rect &rect = rects2[i][j];
+        int *cols = colors[i];
+        rect.x = BAR_X + i*BAND_WIDTH;
 
-      SDL_Rect &usrRect = rects2[i][0];
-      SDL_Rect &kerRect = rects2[i][1];
-      SDL_Rect &idlRect = rects2[i][2];
+        rect.y = BAR_Y + BAR_HEIGHT - rect.h;
+        rect.h = BAR_HEIGHT * (data[j] / 100);
 
-      usrRect.x = BAR_X + i*BAND_WIDTH;
-      kerRect.x = BAR_X + i*BAND_WIDTH;
-      idlRect.x = BAR_X + i*BAND_WIDTH;
-
-      usrRect.h = BAR_HEIGHT * (usrValue/100);
-      kerRect.h = BAR_HEIGHT * (kerValue/100);
-      idlRect.h = BAR_HEIGHT * (idlValue/100);
-
-      usrRect.y = BAR_Y + BAR_HEIGHT - usrRect.h;
-      kerRect.y = usrRect.y - kerRect.h;
-      idlRect.y = kerRect.y - idlRect.h;
-
-      SDL_SetRenderDrawColor(render, 0, 148, 255, 255);
-      SDL_RenderFillRect(render, &usrRect);
-      SDL_SetRenderDrawColor(render, 255, 0, 0, 255);
-      SDL_RenderFillRect(render, &kerRect);
-      SDL_SetRenderDrawColor(render, 0, 255, 0, 255);
-      SDL_RenderFillRect(render, &idlRect);
+        // else {
+        //   rect.y = rects2[i][j-1].y - rect.h;
+        // }
+        //
+        SDL_SetRenderDrawColor(render, cols[0], cols[1], cols[2], 255);
+        SDL_RenderFillRect(render, &rect);
+      }
     }
   } else {
     for (size_t i = 0; i < _dataCount; i++) {
@@ -93,14 +83,16 @@ void Graph::draw() {
   }
 }
 
-// TODO: Rework this to make it general instead of working for 3.
 void Graph::updateSize(int index, double amount) {
   if (vertical) return;
   SDL_Rect &rect = rects[index];
   rect.w = BAR_WIDTH * (amount/100);
 
-  if (index == 1) rect.x = BAR_X + rects[0].w;
-  if (index == 2) rect.x = rects[1].x + rects[1].w;
+  if (index == 1) {
+    rect.x = BAR_X + rects[0].w;
+  } else if (index > 1) {
+    if (index == 2) rect.x = rects[index-1].x + rects[index-1].w;
+  }
 }
 
 void Graph::insertBand(double *band) {

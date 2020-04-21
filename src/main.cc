@@ -188,7 +188,6 @@ int main(int argc, char **args) {
 		SDL_Delay(1000/60);
 	}
 
-	printf("\n");
 	SDL_Quit();
 	return 0;
 }

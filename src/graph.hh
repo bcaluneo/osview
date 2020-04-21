@@ -28,9 +28,9 @@ class Graph {
     void toggleVertical();
 
   private:
-    bool vertical;
-    size_t currBandPos;
-    size_t _dataCount;
+    bool vertical = 0;
+    size_t currBandPos = 0;
+    size_t _dataCount = 0;
     SDL_Rect *rects, **rects2;
     double **bands;
     std::vector<int*> colors;
