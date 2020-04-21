@@ -3,8 +3,8 @@
 #include <tuple>
 #include <vector>
 
-#ifndef TIME_HH
-#define TIME_HH
+#ifndef DATA_HH
+#define DATA_HH
 
 #define percent(a, b) a*100 / b
 
@@ -13,22 +13,17 @@ extern const int POLL_TIME, BAND_WIDTH, BAR_WIDTH;
 extern std::vector<std::tuple<double,double,double>> bands;
 size_t totalBands = BAR_WIDTH / BAND_WIDTH;
 
-// TODO: Since we're only using the lower part of the DWORD for the FILETIME
-// there's no reason to do the whole 64-bit operation.
-void GetFileTime(FILETIME &result, const FILETIME &start, const FILETIME &end) {
+void computeTime(FILETIME &result, const FILETIME &start, const FILETIME &end) {
 	ULARGE_INTEGER largeStart = { 0 };
 	largeStart.LowPart = start.dwLowDateTime;
-	largeStart.HighPart = start.dwHighDateTime;
 	ULARGE_INTEGER largeEnd = { 0 };
 	largeEnd.LowPart = end.dwLowDateTime;
-	largeEnd.HighPart = end.dwHighDateTime;
 	largeStart.QuadPart = largeEnd.QuadPart - largeStart.QuadPart;
 	result.dwLowDateTime = largeStart.LowPart;
-	result.dwHighDateTime = largeStart.HighPart;
 }
 
 int getData(void *data) {
-	printf("CPU:\tIdl:\tKer:\tUsr:\n");
+	printf("CPU:\tIdl:\tKer:\tUsr:\tMem %%:\n");
 	double *ret = static_cast<double*>(data);
 	while (!quit) {
 		FILETIME a0, a1, a2, b0, b1, b2;
@@ -38,9 +33,9 @@ int getData(void *data) {
 
 		FILETIME finalIdle, finalKernel, finalUser;
 
-		GetFileTime(finalIdle, a0, b0);
-		GetFileTime(finalKernel, a1, b1);
-		GetFileTime(finalUser, a2, b2);
+		computeTime(finalIdle, a0, b0);
+		computeTime(finalKernel, a1, b1);
+		computeTime(finalUser, a2, b2);
 
 		double idleTime, kernelTime, userTime;
 
@@ -57,12 +52,23 @@ int getData(void *data) {
 		ret[1] = percent(actKernel, total);
 		ret[2] = percent(userTime, total);
 
-		bands.push_back(std::make_tuple(ret[0], ret[1], ret[2]));
-		if (bands.size() > totalBands) bands.clear();
+		if (bands.size() >= totalBands) {
+			bands.insert(bands.begin(), std::make_tuple(ret[0], ret[1], ret[2]));
+			bands.erase(bands.end());
+		} else {
+			bands.push_back(std::make_tuple(ret[0], ret[1], ret[2]));
+		}
 
-		printf("%.2f\t%.2f\t%.2f\t%.2f\r", cpu, percent(idleTime, total),
+		MEMORYSTATUSEX memStatus;
+		memStatus.dwLength = sizeof (memStatus);
+	  GlobalMemoryStatusEx(&memStatus);
+
+		ret[3] = double(memStatus.dwMemoryLoad);
+
+		printf("%.2f\t%.2f\t%.2f\t%.2f\t%.2f\r", cpu, percent(idleTime, total),
 																						percent(actKernel, total),
-																						percent(userTime, total));
+																						percent(userTime, total),
+																						ret[3]);
 	}
 
 	return 0;

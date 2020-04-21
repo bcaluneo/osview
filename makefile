@@ -1,18 +1,22 @@
 CC = g++
 EXE = osview
 
-FLAGS = -std=c++11
+FLAGS = -std=c++17
 FLAGS += -Wall
 FLAGS += -ID:\SDL\include\SDL2 -LD:\SDL\lib
 FLAGS += -lmingw32 -lSDL2main -lSDL2 -lSDL2_image
 
-OBJS = main.cc
+# FLAGS += -Wl,--subsystem,windows
 
-default:
-	$(CC) src/$(OBJS) $(FLAGS) -o $(EXE)
+OBJS = main.o \
+			 graph.o
 
-rel:
-	$(CC) src/$(OBJS) $(FLAGS) -Wl,--subsystem,windows -o $(EXE)
+all : $(OBJS)
+	$(CC) $^ $(FLAGS) -o $(EXE)
+	rm -f $^
+
+$(OBJS):
+	$(CC) $(FLAGS) -c src/$(@:.o=.cc) -o $@
 
 zip:
 	tar -cvf "$(EXE)".tar *.dll *.exe tex/*.png
