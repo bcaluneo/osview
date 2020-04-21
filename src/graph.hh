@@ -5,16 +5,31 @@
 #ifndef GRAPH_HH
 #define GRAPH_HH
 
+extern SDL_Renderer *render;
+extern const int SCREEN_WIDTH;
+extern const int BAR_X;
+extern const int BAR_Y;
+extern const int BAR_SCALE;
+extern const int BAR_WIDTH;
+extern const int BAR_HEIGHT;
+extern const int BAND_WIDTH;
+
+const int TOTAL_BANDS = BAR_WIDTH / BAND_WIDTH;
+
 class Graph {
   public:
     Graph(int dataCount);
     ~Graph();
-    bool vertical;
-    int _dataCount;
-    SDL_Rect *rects;
-    std::vector<double> bands;
 
     void draw();
+    void updateSize(int index, double amount);
+    void setColors(int colors[][3]);
+
+  private:
+    bool vertical = 0;
+    int _dataCount;
+    std::pair<SDL_Rect, int*> *rects;
+    std::vector<double> bands;
 };
 
 #endif

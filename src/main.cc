@@ -4,6 +4,7 @@
 #include "SDL_thread.h"
 #include "SDL_image.h"
 #include "data.hh"
+#include "graph.hh"
 #include <vector>
 #include <tuple>
 
@@ -122,7 +123,15 @@ int main(int argc, char **args) {
 	SDL_RenderClear(render);
 
 	double data[4] = {0.0, 0.0, 0.0, 0.0};
-	SDL_CreateThread(getData, "Data Thread", (void *) data);
+	int colors[3][3] = {
+		{0, 128, 255},
+		{255, 0, 0},
+		{0, 255, 0}
+	};
+
+	Graph g(3);
+	g.setColors(colors);
+	SDL_CreateThread(getData, "Data Thread", static_cast<void*>(&g));
 
 	SDL_Event event;
 	bool graph = 0;
@@ -162,7 +171,8 @@ int main(int argc, char **args) {
 		bar.y = BAR_Y*BAR_SCALE;
 		SDL_RenderCopy(render, tex2, NULL, &bar);
 
-		redraw(data, graph, bands);
+		// redraw(data, graph, bands);
+		g.draw();
 		SDL_RenderPresent(render);
 		SDL_Delay(1000/60);
 	}
