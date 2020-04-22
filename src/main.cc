@@ -7,8 +7,6 @@
 #include "SDL_image.h"
 #include "data.hh"
 #include "graph.hh"
-#include <vector>
-#include <tuple>
 
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 240;
@@ -21,6 +19,8 @@ const int POLL_TIME = 200;
 const int BAND_WIDTH = 5;
 
 bool quit = 0;
+SDL_Window *window;
+SDL_Renderer *render;
 
 int main(int argc, char **args) {
 	SDL_Init(SDL_INIT_VIDEO);
@@ -47,13 +47,13 @@ int main(int argc, char **args) {
 
 	int colors[3][3] = {
 		{0, 128, 255},
-		{255, 0, 0},
-		{0, 255, 0}
+		{220, 0, 0},
+		{0, 220, 0}
 	};
 
 	int memColors[2][3] = {
-		{0, 128, 255},
-		{0, 255, 0}
+		{0, 220, 0},
+		{0, 128, 255}
 	};
 
 	Graph cpuGraph(3, 0);
