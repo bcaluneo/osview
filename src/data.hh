@@ -1,3 +1,5 @@
+// Copyright (C) Brendan Caluneo
+
 #include <cstdint>
 #include <cstdio>
 #include <tuple>
@@ -10,9 +12,6 @@
 #define percent(a, b) a*100 / b
 
 extern bool quit;
-extern const int POLL_TIME, BAND_WIDTH, BAR_WIDTH;
-extern std::vector<std::tuple<double,double,double>> bands;
-size_t totalBands = BAR_WIDTH / BAND_WIDTH;
 
 void computeTime(FILETIME &result, const FILETIME &start, const FILETIME &end) {
 	ULARGE_INTEGER largeStart = { 0 };

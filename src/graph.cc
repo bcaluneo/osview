@@ -1,3 +1,5 @@
+// Copyright (C) Brendan Caluneo
+
 #include "graph.hh"
 #include <iostream>
 

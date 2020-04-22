@@ -1,3 +1,5 @@
+// Copyright (C) Brendan Caluneo
+
 #include <vector>
 #include <tuple>
 #include "SDL.h"

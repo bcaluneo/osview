@@ -1,3 +1,5 @@
+// Copyright (C) Brendan Caluneo
+
 #define _WIN32_WINNT 0x0501
 #include <Windows.h>
 #include "SDL.h"
@@ -19,85 +21,6 @@ const int POLL_TIME = 200;
 const int BAND_WIDTH = 5;
 
 bool quit = 0;
-
-SDL_Window *window = nullptr;
-SDL_Renderer *render = nullptr;
-std::vector<std::tuple<double, double, double>> bands;
-
-template <typename T>
-void redraw(double data[4], bool graph, std::vector<T> &bands) {
-	SDL_Rect usrRect, kerRect, idlRect, memRect, memBgRect;
-
-	memBgRect.x = BAR_X;
-	memBgRect.y = BAR_Y*BAR_SCALE;
-	memBgRect.w = BAR_WIDTH;
-	memBgRect.h = BAR_HEIGHT;
-	SDL_SetRenderDrawColor(render, 0, 255, 0, 255);
-	SDL_RenderFillRect(render, &memBgRect);
-
-	if (graph) {
-
-	} else {
-		memRect.x = BAR_X;
-		memRect.y = BAR_Y*BAR_SCALE;
-		memRect.w = BAR_WIDTH * (data[3] / 100);
-		memRect.h = BAR_HEIGHT;
-	}
-
-	SDL_SetRenderDrawColor(render, 0, 148, 255, 255);
-	SDL_RenderFillRect(render, &memRect);
-
-	if (graph) {
-		for (auto it = bands.begin(); it != bands.end(); it++) {
-			auto pos = it-bands.begin();
-			auto t = *it;
-
-			double usrData = std::get<2>(t);
-			double kerData = std::get<1>(t);
-			double idlData = std::get<0>(t);
-
-			usrRect.x = BAR_X + pos*BAND_WIDTH;
-			kerRect.x = BAR_X + pos*BAND_WIDTH;
-			idlRect.x = BAR_X + pos*BAND_WIDTH;
-			usrRect.w = kerRect.w = idlRect.w = BAND_WIDTH;
-			usrRect.h = BAR_HEIGHT * (usrData/100);
-			kerRect.h = BAR_HEIGHT * (kerData/100);
-			idlRect.h = BAR_HEIGHT * (idlData/100);
-			usrRect.y = BAR_Y + BAR_HEIGHT - usrRect.h;
-			kerRect.y = usrRect.y - kerRect.h;
-			idlRect.y = kerRect.y - idlRect.h;
-
-			SDL_SetRenderDrawColor(render, 0, 148, 255, 255);
-			SDL_RenderFillRect(render, &usrRect);
-			SDL_SetRenderDrawColor(render, 255, 0, 0, 255);
-			SDL_RenderFillRect(render, &kerRect);
-			SDL_SetRenderDrawColor(render, 0, 255, 0, 255);
-			SDL_RenderFillRect(render, &idlRect);
-		}
-	} else {
-		usrRect.x = BAR_X;
-		usrRect.w = BAR_WIDTH * (data[2] / 100);
-		usrRect.y = BAR_Y;
-		usrRect.h = BAR_HEIGHT;
-
-		kerRect.x = BAR_X + usrRect.w;
-		kerRect.y = BAR_Y;
-		kerRect.w = BAR_WIDTH * (data[1] / 100);
-		kerRect.h = BAR_HEIGHT;
-
-		idlRect.x = kerRect.x + kerRect.w;
-		idlRect.y = BAR_Y;
-		idlRect.w = BAR_WIDTH * (data[0] / 100);
-		idlRect.h = BAR_HEIGHT;
-
-		SDL_SetRenderDrawColor(render, 0, 148, 255, 255);
-		SDL_RenderFillRect(render, &usrRect);
-		SDL_SetRenderDrawColor(render, 255, 0, 0, 255);
-		SDL_RenderFillRect(render, &kerRect);
-		SDL_SetRenderDrawColor(render, 0, 255, 0, 255);
-		SDL_RenderFillRect(render, &idlRect);
-	}
-}
 
 int main(int argc, char **args) {
 	SDL_Init(SDL_INIT_VIDEO);
@@ -181,7 +104,6 @@ int main(int argc, char **args) {
 		bar.y = BAR_Y*BAR_SCALE;
 		SDL_RenderCopy(render, tex2, NULL, &bar);
 
-		// redraw(data, graph, bands);
 		cpuGraph.draw();
 		memGraph.draw();
 
