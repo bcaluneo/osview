@@ -13,7 +13,6 @@ OBJS = main.o \
 
 all : $(OBJS)
 	$(CC) $^ $(FLAGS) -o $(EXE)
-	rm -f $^
 
 $(OBJS):
 	$(CC) $(FLAGS) -c src/$(@:.o=.cc) -o $@
