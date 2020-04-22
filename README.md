@@ -12,8 +12,10 @@ tool is below: <br/>
 Since the days of IRIX being usable in the PC market are long gone, I have
 sought a way to recreate this program for years. Often I have come close, but
 before recently I was not able to recreate the proper look and feel of this tool.
-Here is a screenshot of my tool as it stands: <br/>
+Here are some screenshots of my tool as it stands: <br/>
 ![Screenshot of osview](screenshots/prev.png)
+<br/>
+![Screenshot of osview](screenshots/prev2.png)
 <br/>
 This tool uses the win32 api library in order to measure system resource
 usage time over a period defined in the main program. Specifically, it measures the amount of time the system has been executing tasks in kernel mode, user mode, and the amount of time that it has spent idling. More information can be found in the Windows Dev Center; specifically, [here](https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getsystemtimes). All the rendering is handled using the SDL2 library.
