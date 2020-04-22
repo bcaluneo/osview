@@ -157,6 +157,7 @@ int main(int argc, char **args) {
 						break;
 					case SDLK_h:
 						cpuGraph.toggleVertical();
+						memGraph.toggleVertical();
 						break;
 				}
 

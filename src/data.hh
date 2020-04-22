@@ -57,6 +57,9 @@ int getData(void *data) {
 		double band[3] = { percent(userTime, total), percent(actKernel, total),
 											 percent(idleTime, total) };
 
+		double band0[2] = { double(memStatus.dwMemoryLoad),
+												100-double(memStatus.dwMemoryLoad) };
+
 		g[0].updateSize(0, percent(userTime, total));
 		g[0].updateSize(1, percent(actKernel, total));
 		g[0].updateSize(2, percent(idleTime, total));
@@ -64,11 +67,12 @@ int getData(void *data) {
 
 		g[1].updateSize(0, double(memStatus.dwMemoryLoad));
 		g[1].updateSize(1, 100-double(memStatus.dwMemoryLoad));
+		g[1].insertBand(band0);
 
-		// printf("%.2f\t%.2f\t%.2f\t%.2f\t%.2f\r", cpu, percent(idleTime, total),
-		// 																				percent(actKernel, total),
-		// 																				percent(userTime, total),
-		// 																				double(memStatus.dwMemoryLoad));
+		printf("%.2f\t%.2f\t%.2f\t%.2f\t%.2f\r", cpu, percent(idleTime, total),
+																						percent(actKernel, total),
+																						percent(userTime, total),
+																						double(memStatus.dwMemoryLoad));
 	}
 
 	return 0;

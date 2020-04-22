@@ -31,7 +31,7 @@ class Graph {
     bool vertical = 0;
     size_t currBandPos = 0;
     size_t _dataCount = 0;
-    SDL_Rect *rects, **rects2;
+    SDL_Rect *rects, **vRects;
     double **bands;
     std::vector<int*> colors;
 };
