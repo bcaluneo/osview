@@ -16,9 +16,6 @@ Graph::Graph(size_t dataCount, size_t scale) : _dataCount(dataCount) {
 
     for (size_t j = 0; j < dataCount; j++) {
       bands[i][j] = 0.0;
-
-      SDL_Rect &r = vRects[i][j];
-      r.x = r.y = r.w = r.h = 0.0;
     }
   }
 
@@ -45,24 +42,30 @@ void Graph::draw() {
     for (size_t i = 0; i < TOTAL_BANDS; i++) {
       double *data = bands[i];
 
+      size_t totalZeroes = 0;
       for (size_t j = 0; j < _dataCount; j++) {
-        if (data[j] == 0.0) continue;
-        double data = bands[i][j];
-        SDL_Rect &r = vRects[i][j];
-        int *cols = colors[j];
-        r.x = BAR_X + i*BAND_WIDTH;
-        r.w = BAND_WIDTH;
-        r.h = BAR_HEIGHT * (data/100);
+        if (data[j] == 0.0) totalZeroes += 1;
+      }
 
-        if (j == 0) {
-          r.y = rects[0].y + BAR_HEIGHT - r.h;
-        } else {
-          SDL_Rect &r0 = vRects[i][j - 1];
-          r.y = r0.y - r.h;
+      if (totalZeroes != _dataCount) {
+        for (size_t j = 0; j < _dataCount; j++) {
+          double data = bands[i][j];
+          SDL_Rect &r = vRects[i][j];
+          int *cols = colors[j];
+          r.x = BAR_X + i*BAND_WIDTH;
+          r.w = BAND_WIDTH;
+          r.h = BAR_HEIGHT * (data/100);
+
+          if (j == 0) {
+            r.y = rects[0].y + BAR_HEIGHT - r.h;
+          } else {
+            SDL_Rect &r0 = vRects[i][j - 1];
+            r.y = r0.y - r.h;
+          }
+
+          SDL_SetRenderDrawColor(render, cols[0], cols[1], cols[2], 255);
+          SDL_RenderFillRect(render, &r);
         }
-
-        SDL_SetRenderDrawColor(render, cols[0], cols[1], cols[2], 255);
-        SDL_RenderFillRect(render, &r);
       }
     }
   } else {
