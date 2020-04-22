@@ -12,6 +12,7 @@
 #define percent(a, b) a*100 / b
 
 extern bool quit;
+extern const int POLL_TIME;
 
 void computeTime(FILETIME &result, const FILETIME &start, const FILETIME &end) {
 	ULARGE_INTEGER largeStart = { 0 };

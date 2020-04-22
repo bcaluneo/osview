@@ -21,8 +21,8 @@ Graph::Graph(size_t dataCount, size_t scale) : _dataCount(dataCount) {
 
   for (size_t i = 0; i < dataCount; i++) {
     rects[i].x = BAR_X;
-    rects[i].y = scale == 0 ? BAR_Y : BAR_Y*scale*BAR_SCALE;
-    rects[i].h = BAR_HEIGHT;
+    rects[i].y = scale == 0 ? BAR_Y : 1 + BAR_Y*scale*BAR_SCALE;
+    rects[i].h = BAR_HEIGHT + 1;
   }
 }
 
@@ -93,14 +93,24 @@ void Graph::updateSize(int index, double amount) {
 
 void Graph::insertBand(double *band) {
   if (currBandPos >= TOTAL_BANDS) {
-    currBandPos = 0;
+    for (size_t j = 0; j < _dataCount; j++) {
+      bands[0][j] = band[j];
+    }
+
+    for (size_t i = TOTAL_BANDS - 1; i > 0; i--) {
+      for (size_t j = 0; j < _dataCount; j++) {
+        bands[i][j] = bands[i-1][j];
+      }
+    }
+
+  } else {
+    for (size_t j = 0; j < _dataCount; j++) {
+      bands[currBandPos][j] = band[j];
+    }
+
+    currBandPos++;
   }
 
-  for (size_t j = 0; j < _dataCount; j++) {
-    bands[currBandPos][j] = band[j];
-  }
-
-  currBandPos++;
 }
 
 void Graph::setColors(int colors[][3]) {
