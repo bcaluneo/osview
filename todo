@@ -1,2 +1,3 @@
 output usage over a certain period of time to a file
 convert all c-style arrays to std::array?
+use smart pointers to learn how they work and also to manage memory
