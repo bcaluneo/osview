@@ -21,6 +21,8 @@ This tool uses the win32 api library in order to measure system resource
 usage time over a period defined in the main program. Specifically, it measures the amount of time the system has been executing tasks in kernel mode, user mode, and the amount of time that it has spent idling. More information can be found in the Windows Dev Center; specifically, [here](https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getsystemtimes). All the rendering is handled using the SDL2 library.
 Because this program uses the win32 api it is only compatible with Windows.
 
-## Usage
+## Usage And Further Explanation
 
-This tool is not meant to be used as an actual resource monitoring tool. The information it uses more than likely will not line up with the usage percent shown in Task Manager or other applications like it due to the differences between their usage statistic/timing and mine.
+Because this tool retrieves its information directly from the Windows api it can be used as an accurate measure of system performance over a period
+of time. The values shown will likely not line up with the values in Task Manager. This is due to how Task Manager records system performance: it
+shows the amount of CPU cycles over a given period that were not spent idling. Task Manager also displays percent utilization while osview does not (the calculation is performed but it is not displayed to the user).
