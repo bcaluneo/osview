@@ -2,8 +2,9 @@
 
 #include <cstdint>
 #include <cstdio>
-#include <tuple>
-#include <vector>
+#include <iostream>
+#include <fstream>
+#include <iomanip>
 #include "graph.hh"
 
 #ifndef DATA_HH
@@ -12,7 +13,7 @@
 #define percent(a, b) a*100 / b
 
 extern bool quit;
-extern const int POLL_TIME;
+extern const size_t POLL_TIME;
 
 void computeTime(FILETIME &result, const FILETIME &start, const FILETIME &end) {
 	ULARGE_INTEGER largeStart = { 0 };
@@ -24,7 +25,12 @@ void computeTime(FILETIME &result, const FILETIME &start, const FILETIME &end) {
 }
 
 int getData(void *data) {
-	printf("CPU:\tIdl:\tKer:\tUsr:\tMem %%:\n");
+
+	std::ofstream log;
+	log.open("logfile.txt", std::ios::trunc);
+	log << "CPU:\tIdl:\tKer:\tUsr:\tMem %:" << "\n";
+	log << std::fixed << std::setprecision(2);
+
 	Graph *g = static_cast<Graph*>(data);
 
 	while (!quit) {
@@ -69,11 +75,14 @@ int getData(void *data) {
 		g[1].updateSize(1, 100-double(memStatus.dwMemoryLoad));
 		g[1].insertBand(band0);
 
-		printf("%.2f\t%.2f\t%.2f\t%.2f\t%.2f\r", cpu, percent(idleTime, total),
-																						percent(actKernel, total),
-																						percent(userTime, total),
-																						double(memStatus.dwMemoryLoad));
+		log << cpu                            << "\t" <<
+		       percent(idleTime, total)       << "\t" <<
+					 percent(actKernel, total)      << "\t" <<
+					 percent(userTime, total)       << "\t" <<
+					 double(memStatus.dwMemoryLoad) << "\n";
 	}
+
+	log.close();
 
 	return 0;
 }
