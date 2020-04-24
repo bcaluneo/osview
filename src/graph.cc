@@ -3,11 +3,13 @@
 #include "graph.hh"
 #include <iostream>
 
-Graph::Graph(size_t dataCount, size_t scale) : _dataCount(dataCount) {
-  rects = new SDL_Rect[dataCount];
+Graph::Graph(size_t dataCount, size_t scale) : dataCount(dataCount), scale(scale) {
+  rects = std::make_shared<std::vector<SDL_Rect>>();
+
   vRects = new SDL_Rect*[TOTAL_BANDS];
   bands = new double*[TOTAL_BANDS];
 
+  rects->resize(dataCount);
   colors.reserve(dataCount);
 
   for (size_t i = 0; i < TOTAL_BANDS; i++) {
@@ -17,12 +19,6 @@ Graph::Graph(size_t dataCount, size_t scale) : _dataCount(dataCount) {
     for (size_t j = 0; j < dataCount; j++) {
       bands[i][j] = 0.0;
     }
-  }
-
-  for (size_t i = 0; i < dataCount; i++) {
-    rects[i].x = BAR_X;
-    rects[i].y = scale == 0 ? BAR_Y : 1 + BAR_Y*scale*BAR_SCALE;
-    rects[i].h = BAR_HEIGHT + 1;
   }
 }
 
@@ -34,7 +30,6 @@ Graph::~Graph() {
 
   delete [] vRects;
   delete [] bands;
-  delete [] rects;
 }
 
 void Graph::draw() {
@@ -43,12 +38,12 @@ void Graph::draw() {
       double *data = bands[i];
 
       size_t totalZeroes = 0;
-      for (size_t j = 0; j < _dataCount; j++) {
+      for (size_t j = 0; j < dataCount; j++) {
         if (data[j] == 0.0) totalZeroes += 1;
       }
 
-      if (totalZeroes != _dataCount) {
-        for (size_t j = 0; j < _dataCount; j++) {
+      if (totalZeroes != dataCount) {
+        for (size_t j = 0; j < dataCount; j++) {
           double data = bands[i][j];
           SDL_Rect &r = vRects[i][j];
           int *cols = colors[j];
@@ -57,7 +52,7 @@ void Graph::draw() {
           r.h = BAR_HEIGHT * (data/100);
 
           if (j == 0) {
-            r.y = rects[0].y + BAR_HEIGHT - r.h;
+            r.y =  (scale == 0 ? BAR_Y : 1 + BAR_Y*scale*BAR_SCALE) + BAR_HEIGHT - r.h;
           } else {
             SDL_Rect &r0 = vRects[i][j - 1];
             r.y = r0.y - r.h;
@@ -69,52 +64,57 @@ void Graph::draw() {
       }
     }
   } else {
-    for (size_t i = 0; i < _dataCount; i++) {
-      SDL_Rect &rect = rects[i];
+    for (size_t i = 0; i < dataCount; i++) {
       int *cols = colors[i];
 
       SDL_SetRenderDrawColor(render, cols[0], cols[1], cols[2], 255);
-      SDL_RenderFillRect(render, &rect);
+      SDL_RenderFillRect(render, &rects->at(i));
     }
   }
 }
 
 void Graph::updateSize(int index, double amount) {
   if (vertical) return;
-  SDL_Rect &rect = rects[index];
+
+  SDL_Rect rect;
+  rect.x = BAR_X;
   rect.w = BAR_WIDTH * (amount/100);
+  rect.y = scale == 0 ? BAR_Y : 1 + BAR_Y*scale*BAR_SCALE;
+  rect.h = BAR_HEIGHT + 1;
 
   if (index == 1) {
-    rect.x = BAR_X + rects[0].w;
+    rect.x = BAR_X + rects->at(0).w;
   } else if (index > 1) {
-    rect.x = rects[index-1].x + rects[index-1].w;
+    rect.x = rects->at(index-1).x + rects->at(index-1).w;
   }
+
+  rects->erase(rects->begin()+index);
+  rects->insert(rects->begin()+index, rect);
 }
 
 void Graph::insertBand(double *band) {
   if (currBandPos >= TOTAL_BANDS) {
-    for (size_t j = 0; j < _dataCount; j++) {
+    for (size_t j = 0; j < dataCount; j++) {
       bands[0][j] = band[j];
     }
 
     for (size_t i = TOTAL_BANDS - 1; i > 0; i--) {
-      for (size_t j = 0; j < _dataCount; j++) {
+      for (size_t j = 0; j < dataCount; j++) {
         bands[i][j] = bands[i-1][j];
       }
     }
 
   } else {
-    for (size_t j = 0; j < _dataCount; j++) {
+    for (size_t j = 0; j < dataCount; j++) {
       bands[currBandPos][j] = band[j];
     }
 
     currBandPos++;
   }
-
 }
 
 void Graph::setColors(int colors[][3]) {
-  for (size_t i = 0; i < _dataCount; i++) {
+  for (size_t i = 0; i < dataCount; i++) {
     this->colors.insert(this->colors.end(), colors[i]);
   }
 }

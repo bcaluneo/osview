@@ -2,21 +2,21 @@
 
 #include <vector>
 #include <tuple>
+#include <memory>
 #include "SDL.h"
 
 #ifndef GRAPH_HH
 #define GRAPH_HH
 
 extern SDL_Renderer *render;
-extern const int SCREEN_WIDTH;
-extern const int BAR_X;
-extern const int BAR_Y;
-extern const int BAR_SCALE;
-extern const int BAR_WIDTH;
-extern const int BAR_HEIGHT;
-extern const int BAND_WIDTH;
-
-const size_t TOTAL_BANDS = BAR_WIDTH / BAND_WIDTH;
+extern const size_t SCREEN_WIDTH;
+extern const size_t BAR_X;
+extern const size_t BAR_Y;
+extern const size_t BAR_SCALE;
+extern const size_t BAR_WIDTH;
+extern const size_t BAR_HEIGHT;
+extern const size_t BAND_WIDTH;
+extern const size_t TOTAL_BANDS;
 
 class Graph {
   public:
@@ -32,8 +32,12 @@ class Graph {
   private:
     bool vertical = 0;
     size_t currBandPos = 0;
-    size_t _dataCount = 0;
-    SDL_Rect *rects, **vRects;
+    size_t dataCount = 0;
+    size_t scale = 0;
+
+    std::shared_ptr<std::vector<SDL_Rect>> rects;
+
+    SDL_Rect **vRects;
     double **bands;
     std::vector<int*> colors;
 };
