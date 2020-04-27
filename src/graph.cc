@@ -5,12 +5,12 @@
 
 Graph::Graph(size_t dataCount, size_t scale) : dataCount(dataCount), scale(scale) {
   rects = std::make_shared<std::vector<SDL_Rect>>();
+  colors = std::make_shared<std::vector<int>>();
 
   vRects = new SDL_Rect*[TOTAL_BANDS];
   bands = new double*[TOTAL_BANDS];
 
   rects->resize(dataCount);
-  colors.reserve(dataCount);
 
   for (size_t i = 0; i < TOTAL_BANDS; i++) {
     bands[i] = new double[dataCount];
@@ -46,7 +46,6 @@ void Graph::draw() {
         for (size_t j = 0; j < dataCount; j++) {
           double data = bands[i][j];
           SDL_Rect &r = vRects[i][j];
-          int *cols = colors[j];
           r.x = BAR_X + i*BAND_WIDTH;
           r.w = BAND_WIDTH;
           r.h = BAR_HEIGHT * (data/100);
@@ -58,25 +57,21 @@ void Graph::draw() {
             r.y = r0.y - r.h;
           }
 
-          SDL_SetRenderDrawColor(render, cols[0], cols[1], cols[2], 255);
+          SDL_SetRenderDrawColor(render, colors->at(j*3 + 0), colors->at(j*3 + 1), colors->at(j*3 + 2), 255);
           SDL_RenderFillRect(render, &r);
         }
       }
     }
   } else {
     for (size_t i = 0; i < dataCount; i++) {
-      int *cols = colors[i];
-
-      SDL_SetRenderDrawColor(render, cols[0], cols[1], cols[2], 255);
+      SDL_SetRenderDrawColor(render, colors->at(i*3 + 0), colors->at(i*3 + 1), colors->at(i*3 + 2), 255);
       SDL_RenderFillRect(render, &rects->at(i));
     }
   }
 }
 
 void Graph::updateSize(int index, double amount) {
-  if (vertical) return;
-
-  SDL_Rect rect;
+  SDL_Rect &rect = rects->at(index);
   rect.x = BAR_X;
   rect.w = BAR_WIDTH * (amount/100);
   rect.y = scale == 0 ? BAR_Y : 1 + BAR_Y*scale*BAR_SCALE;
@@ -87,9 +82,6 @@ void Graph::updateSize(int index, double amount) {
   } else if (index > 1) {
     rect.x = rects->at(index-1).x + rects->at(index-1).w;
   }
-
-  rects->erase(rects->begin()+index);
-  rects->insert(rects->begin()+index, rect);
 }
 
 void Graph::insertBand(double *band) {
@@ -113,9 +105,11 @@ void Graph::insertBand(double *band) {
   }
 }
 
-void Graph::setColors(int colors[][3]) {
+void Graph::setColors(int cols[][3]) {
   for (size_t i = 0; i < dataCount; i++) {
-    this->colors.insert(this->colors.end(), colors[i]);
+    for (size_t j = 0; j < 3; j++) {
+      colors->push_back(cols[i][j]);
+    }
   }
 }
 

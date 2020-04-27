@@ -30,16 +30,16 @@ class Graph {
     void toggleVertical();
 
   private:
-    bool vertical = 0;
+    bool vertical = 1;
     size_t currBandPos = 0;
     size_t dataCount = 0;
     size_t scale = 0;
 
     std::shared_ptr<std::vector<SDL_Rect>> rects;
+    std::shared_ptr<std::vector<int>> colors;
 
     SDL_Rect **vRects;
     double **bands;
-    std::vector<int*> colors;
 };
 
 #endif
