@@ -3,14 +3,13 @@
 #include "graph.hh"
 #include <iostream>
 
-Graph::Graph(size_t dataCount, size_t scale) : dataCount(dataCount), scale(scale) {
+Graph::Graph(size_t dataCount, size_t scale, ColorArray colors)
+                        : dataCount(dataCount), scale(scale), colors(colors) {
   rects = std::make_shared<std::vector<SDL_Rect>>();
-  colors = std::make_shared<std::vector<int>>();
+  rects->resize(dataCount);
 
   vRects = new SDL_Rect*[TOTAL_BANDS];
   bands = new double*[TOTAL_BANDS];
-
-  rects->resize(dataCount);
 
   for (size_t i = 0; i < TOTAL_BANDS; i++) {
     bands[i] = new double[dataCount];
@@ -57,14 +56,16 @@ void Graph::draw() {
             r.y = r0.y - r.h;
           }
 
-          SDL_SetRenderDrawColor(render, colors->at(j*3 + 0), colors->at(j*3 + 1), colors->at(j*3 + 2), 255);
+          const auto [cr, cg, cb] = colors.colors.at(j);
+          SDL_SetRenderDrawColor(render, cr, cg, cb, 255);
           SDL_RenderFillRect(render, &r);
         }
       }
     }
   } else {
     for (size_t i = 0; i < dataCount; i++) {
-      SDL_SetRenderDrawColor(render, colors->at(i*3 + 0), colors->at(i*3 + 1), colors->at(i*3 + 2), 255);
+      const auto [r, g, b] = colors.colors.at(i);
+      SDL_SetRenderDrawColor(render, r, g, b, 255);
       SDL_RenderFillRect(render, &rects->at(i));
     }
   }
@@ -102,14 +103,6 @@ void Graph::insertBand(double *band) {
     }
 
     currBandPos++;
-  }
-}
-
-void Graph::setColors(int cols[][3]) {
-  for (size_t i = 0; i < dataCount; i++) {
-    for (size_t j = 0; j < 3; j++) {
-      colors->push_back(cols[i][j]);
-    }
   }
 }
 
