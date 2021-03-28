@@ -8,19 +8,17 @@
 #ifndef GRAPH_HH
 #define GRAPH_HH
 
-extern SDL_Renderer *render;
-
 class Graph {
   public:
-    Graph(size_t dataCount, size_t scale, ColorArray colors);
-    ~Graph();
+    Graph(std::string title, size_t dataCount, size_t scale, ColorArray colors);
 
-    void draw();
-    void updateSize(int index, double amount);
-    void insertBand(double *band);
+    void draw(SDL_Renderer *render);
+    void setData(int index, double amount);
+    void insertBand(const Band& band);
     void toggleVertical();
 
   private:
+    std::string title;
     bool vertical = 0;
     size_t currBandPos = 0;
     size_t dataCount = 0;
@@ -28,9 +26,7 @@ class Graph {
 
     ColorArray colors;
     std::shared_ptr<std::vector<SDL_Rect>> rects;
-
-    SDL_Rect **vRects;
-    double **bands;
+    std::shared_ptr<std::vector<Band>> bands;
 };
 
 #endif

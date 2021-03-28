@@ -2,18 +2,15 @@
 
 #include <cstdint>
 #include <cstdio>
-#include <iostream>
-#include <fstream>
-#include <iomanip>
 #include "graph.hh"
+#include "util.hh"
 
 #ifndef DATA_HH
 #define DATA_HH
 
-#define percent(a, b) a*100 / b
-
 extern bool quit;
-extern const size_t POLL_TIME;
+
+#define percent(a, b) (a*100/b)
 
 void computeTime(FILETIME &result, const FILETIME &start, const FILETIME &end) {
 	ULARGE_INTEGER largeStart = { 0 };
@@ -25,12 +22,6 @@ void computeTime(FILETIME &result, const FILETIME &start, const FILETIME &end) {
 }
 
 int getData(void *data) {
-
-	std::ofstream log;
-	log.open("logfile.txt", std::ios::trunc);
-	log << "CPU:\tIdl:\tKer:\tUsr:\tMem %:" << "\n";
-	log << std::fixed << std::setprecision(2);
-
 	Graph *g = static_cast<Graph*>(data);
 
 	while (!quit) {
@@ -56,33 +47,25 @@ int getData(void *data) {
 		userTime = finalUser.dwLowDateTime;
 
 		double total = (kernelTime+userTime); // ker + idl + usr
-		double cpu = (kernelTime+userTime-idleTime)*100 / total;
+		// double cpu = (kernelTime+userTime-idleTime)*100 / total;
 
 		double actKernel = kernelTime - idleTime;
 
-		double band[3] = { percent(userTime, total), percent(actKernel, total),
-											 percent(idleTime, total) };
+		Band cpuBand { percent(userTime, total), percent(actKernel, total),
+									 percent(idleTime, total) };
 
-		double band0[2] = { double(memStatus.dwMemoryLoad),
+		Band memBand { double(memStatus.dwMemoryLoad),
 												100-double(memStatus.dwMemoryLoad) };
 
-		g[0].updateSize(0, percent(userTime, total));
-		g[0].updateSize(1, percent(actKernel, total));
-		g[0].updateSize(2, percent(idleTime, total));
-		g[0].insertBand(band);
+		g[0].setData(0, percent(userTime, total));
+		g[0].setData(1, percent(actKernel, total));
+		g[0].setData(2, percent(idleTime, total));
+		g[0].insertBand(cpuBand);
 
-		g[1].updateSize(0, double(memStatus.dwMemoryLoad));
-		g[1].updateSize(1, 100-double(memStatus.dwMemoryLoad));
-		g[1].insertBand(band0);
-
-		log << cpu                            << "\t" <<
-		       percent(idleTime, total)       << "\t" <<
-					 percent(actKernel, total)      << "\t" <<
-					 percent(userTime, total)       << "\t" <<
-					 double(memStatus.dwMemoryLoad) << "\n";
+		g[1].setData(0, double(memStatus.dwMemoryLoad));
+		g[1].setData(1, 100-double(memStatus.dwMemoryLoad));
+		g[1].insertBand(memBand);
 	}
-
-	log.close();
 
 	return 0;
 }

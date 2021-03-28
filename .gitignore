@@ -3,3 +3,6 @@
 *.pdn
 *.dll
 *.o
+*.txt
+/bin/
+/obj/

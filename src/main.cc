@@ -2,13 +2,9 @@
 
 #define _WIN32_WINNT 0x0501
 #include <Windows.h>
-#include <iostream>
-#include <array>
-#include <tuple>
 #include "SDL.h"
 #include "SDL_thread.h"
 #include "SDL_image.h"
-#include "SDL_syswm.h"
 #include "data.hh"
 #include "graph.hh"
 #include "util.hh"
@@ -22,9 +18,12 @@ int main(int argc, char **args) {
 	IMG_Init(IMG_INIT_PNG);
 
 	window = SDL_CreateWindow("osview", SDL_WINDOWPOS_CENTERED,
-														SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH,
-														SCREEN_HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_ALWAYS_ON_TOP);
+														          SDL_WINDOWPOS_CENTERED,
+																			SCREEN_WIDTH,
+																			SCREEN_HEIGHT,
+																			SDL_WINDOW_SHOWN);
 	render = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
+	SDL_EventState(SDL_SYSWMEVENT, SDL_ENABLE);
 
 	SDL_Surface *icon = IMG_Load("tex/icon.png");
 	SDL_SetWindowIcon(window, icon);
@@ -40,43 +39,41 @@ int main(int argc, char **args) {
 	SDL_SetRenderDrawColor(render, 180, 180, 180, 255);
 	SDL_RenderClear(render);
 
-	ColorArray cpuColors {
-		std::make_tuple(0, 128, 255),
-		std::make_tuple(220, 0, 0),
-		std::make_tuple(0, 220, 0)
+	std::vector<Graph> graphs {
+		{"CPU Graph", 3, 0, {
+			{0, 128, 255}, // User color
+			{220, 0, 0}, // System color
+			{0, 220, 0} // Idle color
+		}},
+
+		{"Memory Usage Graph", 2, 1, {
+			{0, 220, 0}, // Inuse color
+			{0, 128, 255} // Free color
+		}}
 	};
-
-	ColorArray memColors {
-		std::make_tuple(0, 220, 0),
-		std::make_tuple(0, 128, 255)
-	};
-
-	Graph cpuGraph {3, 0, cpuColors};
-	Graph memGraph {2, 1, memColors};
-
-	Graph graphs[2] = { cpuGraph, memGraph };
-	SDL_CreateThread(getData, "Data Thread", static_cast<void*>(graphs));
+	SDL_CreateThread(getData, "Data Thread", static_cast<void*>(graphs.data()));
 
 	SDL_Event event;
 	while (!quit) {
-		if (SDL_PollEvent(&event)) {
-		switch (event.type) {
-			case SDL_QUIT:
-				quit = 1;
-				break;
-			case SDL_KEYDOWN:
-				switch (event.key.keysym.sym) {
-					case SDLK_ESCAPE:
-						quit = 1;
-						break;
-					case SDLK_h:
-						cpuGraph.toggleVertical();
-						memGraph.toggleVertical();
-						break;
-				}
+		while (SDL_PollEvent(&event)) {
+			switch (event.type) {
+				case SDL_QUIT:
+					quit = 1;
+					break;
+				case SDL_KEYDOWN:
+					switch (event.key.keysym.sym) {
+						case SDLK_ESCAPE:
+							quit = 1;
+							break;
+						case SDLK_h:
+							for (auto g : graphs) {
+								g.toggleVertical();
+							}
+							break;
+					}
 
-				break;
-			}
+					break;
+				}
 		}
 
 		SDL_Rect bg, bar;
@@ -95,14 +92,14 @@ int main(int argc, char **args) {
 		bar.y = BAR_Y*BAR_SCALE;
 		SDL_RenderCopy(render, tex2, NULL, &bar);
 
-		cpuGraph.draw();
-		memGraph.draw();
+		for (auto g : graphs) {
+			g.draw(render);
+		}
 
 		SDL_RenderPresent(render);
 		SDL_Delay(1000/60);
 	}
 
 	SDL_Quit();
-	std::cout << std::endl;
 	return 0;
 }
