@@ -1,7 +1,7 @@
 // Copyright (C) Brendan Caluneo
 
 #define _WIN32_WINNT 0x0501
-#include <Windows.h>
+#include "windows.h"
 #include "SDL.h"
 #include "SDL_thread.h"
 #include "SDL_image.h"
@@ -66,9 +66,7 @@ int main(int argc, char **args) {
 							quit = 1;
 							break;
 						case SDLK_h:
-							for (auto g : graphs) {
-								g.toggleVertical();
-							}
+							for (auto &g : graphs) { g.toggleVertical(); }
 							break;
 					}
 

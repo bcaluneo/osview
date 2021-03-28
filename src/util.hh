@@ -36,22 +36,14 @@ class Band {
 public:
   Band(std::initializer_list<double>&& list) {
     data.insert(data.end(), list.begin(), list.end());
-    for (auto d : list) {
-      SDL_Rect r;
-      r.x = BAR_X;
-      r.w = BAND_WIDTH;
-      r.h = BAR_HEIGHT * (d/100);
-      rects.push_back(r);
-    }
   }
 
   auto& at(size_t index) {
-    return rects.at(index);
+    return data[index];
   }
 
 private:
   std::vector<double> data;
-  std::vector<SDL_Rect> rects;
 };
 
 #endif

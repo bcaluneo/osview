@@ -1,7 +1,7 @@
 // Copyright (C) Brendan Caluneo
 
 #include <vector>
-#include <memory>
+#include <memory> // TODO: Doesn't compile without this?
 #include "SDL.h"
 #include "util.hh"
 
@@ -25,8 +25,8 @@ class Graph {
     size_t scale = 0;
 
     ColorArray colors;
-    std::shared_ptr<std::vector<SDL_Rect>> rects;
-    std::shared_ptr<std::vector<Band>> bands;
+    std::vector<double> data;
+    std::vector<Band> bands;
 };
 
 #endif

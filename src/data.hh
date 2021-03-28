@@ -1,7 +1,6 @@
 // Copyright (C) Brendan Caluneo
 
 #include <cstdint>
-#include <cstdio>
 #include "graph.hh"
 #include "util.hh"
 
@@ -48,7 +47,6 @@ int getData(void *data) {
 
 		double total = (kernelTime+userTime); // ker + idl + usr
 		// double cpu = (kernelTime+userTime-idleTime)*100 / total;
-
 		double actKernel = kernelTime - idleTime;
 
 		Band cpuBand { percent(userTime, total), percent(actKernel, total),
