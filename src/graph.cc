@@ -11,6 +11,11 @@ Graph::Graph(std::string title, size_t dataCount, size_t scale, ColorArray color
 // TODO: There's a bug here that's causing a segfault.
 void Graph::draw(SDL_Renderer *render) {
   if (vertical) {
+    SDL_Rect bg {BAR_X, (scale == 0 ? BAR_Y : BAR_Y*scale*BAR_SCALE), bands.size()*BAND_WIDTH, BAR_HEIGHT};
+    const auto [r, g, b] = colors.at(dataCount - 1);
+    SDL_SetRenderDrawColor(render, r, g, b, 255);
+    SDL_RenderFillRect(render, &bg);
+
     for (size_t i = 0; i < bands.size(); ++i) {
       for (size_t j = 0; j < dataCount; j++) {
         SDL_Rect rect;
@@ -31,6 +36,11 @@ void Graph::draw(SDL_Renderer *render) {
       }
     }
   } else {
+    SDL_Rect bg {BAR_X, (scale == 0 ? BAR_Y : BAR_Y*scale*BAR_SCALE), BAR_WIDTH, BAR_HEIGHT};
+    const auto [r, g, b] = colors.at(dataCount - 1);
+    SDL_SetRenderDrawColor(render, r, g, b, 255);
+    SDL_RenderFillRect(render, &bg);
+
     for (size_t i = 0; i < dataCount; i++) {
       const auto [r, g, b] = colors.at(i);
       SDL_SetRenderDrawColor(render, r, g, b, 255);
