@@ -1,5 +1,10 @@
 // Copyright (C) Brendan Caluneo
 
+// Header Name:
+// - Data
+// Description:
+// - Polls the system to retrieve data to feed on-screen bar graphs.
+
 #include <cstdint>
 #include "graph.hh"
 #include "util.hh"

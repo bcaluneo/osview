@@ -61,15 +61,14 @@ int main(int argc, char **args) {
 				case SDL_QUIT:
 					quit = 1;
 					break;
-				case SDL_KEYDOWN:
-					switch (event.key.keysym.sym) {
-						case SDLK_ESCAPE:
-							quit = 1;
-							break;
-						case SDLK_h:
-							for (auto &g : graphs) { g.toggleVertical(); }
-							break;
-					}
+				case SDL_KEYUP:
+					auto k = event.key.keysym.sym;
+					if (k == SDLK_ESCAPE) quit = 1;
+					if (k == SDLK_h) for (auto &g : graphs) { g.toggleVertical(); };
+					if (k == SDLK_a) SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,
+						                                        "About",
+																										"osview\nGraphical System Resource Monitoring Tool\nWritten by Brendan Caluneo",
+																										window);
 
 					break;
 				}
@@ -86,8 +85,9 @@ int main(int argc, char **args) {
 		bar.w = BAR_WIDTH + 2;
 		bar.h = BAR_HEIGHT + 2 + 10;
 		SDL_RenderCopy(render, tex, NULL, &bg);
-		SDL_RenderCopy(render, tex2, NULL, &bar);
 
+		// TODO: Change this so all the rendering for a graph is contained within the Graph module.
+		SDL_RenderCopy(render, tex2, NULL, &bar);
 		bar.y = BAR_Y*BAR_SCALE;
 		SDL_RenderCopy(render, tex2, NULL, &bar);
 
