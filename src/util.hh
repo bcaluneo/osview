@@ -1,4 +1,5 @@
 #include <initializer_list>
+#include <tuple>
 
 #ifndef UTIL_HH
 #define UTIL_HH
@@ -14,36 +15,30 @@ constexpr size_t POLL_TIME = 200;
 constexpr size_t BAND_WIDTH = 5;
 constexpr size_t TOTAL_BANDS = BAR_WIDTH / BAND_WIDTH;
 
-typedef std::tuple<int, int, int> ColorTuple;
-
-class ColorArray {
-
+template<typename T>
+class List {
 public:
-  ColorArray(std::initializer_list<ColorTuple>&& t) {
-    colors.insert(colors.end(), t.begin(), t.end());
+  List(std::initializer_list<T>&& args) {
+    data.insert(data.begin(), args.begin(), args.end());
   }
 
-  auto& at(size_t index) {
-    return colors.at(index);
-  }
-
-private:
-  std::vector<ColorTuple> colors;
-};
-
-class Band {
-
-public:
-  Band(std::initializer_list<double>&& list) {
-    data.insert(data.end(), list.begin(), list.end());
-  }
-
-  auto& at(size_t index) {
+  T& operator[](size_t index) {
     return data[index];
   }
 
 private:
-  std::vector<double> data;
+  std::vector<T> data;
 };
+
+typedef std::tuple<int, int, int> ColorTuple;
+typedef std::vector<double> Band;
+
+inline bool isBandEmpty(const Band& band) {
+  for (auto d : band) {
+    if (d != 0.0) return false;
+  }
+
+  return true;
+}
 
 #endif

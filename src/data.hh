@@ -49,20 +49,19 @@ int getData(void *data) {
 		// double cpu = (kernelTime+userTime-idleTime)*100 / total;
 		double actKernel = kernelTime - idleTime;
 
-		Band cpuBand { percent(userTime, total), percent(actKernel, total),
-									 percent(idleTime, total) };
-
-		Band memBand { double(memStatus.dwMemoryLoad),
-												100-double(memStatus.dwMemoryLoad) };
-
 		g[0].setData(0, percent(userTime, total));
 		g[0].setData(1, percent(actKernel, total));
 		g[0].setData(2, percent(idleTime, total));
-		g[0].insertBand(cpuBand);
+		g[0].insertBand({ percent(userTime, total),
+			                percent(actKernel, total),
+									    percent(idleTime, total)
+										});
 
 		g[1].setData(0, double(memStatus.dwMemoryLoad));
 		g[1].setData(1, 100-double(memStatus.dwMemoryLoad));
-		g[1].insertBand(memBand);
+		g[1].insertBand({ double(memStatus.dwMemoryLoad),
+										  100-double(memStatus.dwMemoryLoad)
+										});
 	}
 
 	return 0;

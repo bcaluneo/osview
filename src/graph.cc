@@ -3,52 +3,49 @@
 #include "graph.hh"
 #include <iostream>
 
-Graph::Graph(std::string title, size_t dataCount, size_t scale, ColorArray colors)
+#define Y(scale) static_cast<signed>((scale == 0 ? BAR_Y : 1+BAR_Y*scale*BAR_SCALE))
+
+Graph::Graph(std::string title, size_t dataCount, size_t scale, List<ColorTuple> colors)
                         : title(title), dataCount(dataCount), scale(scale), colors(colors) {
   data.resize(dataCount);
+  for (size_t i = 0; i < TOTAL_BANDS; ++i) {
+    Band band;
+    for (size_t j = 0; j < dataCount; ++j) { band.push_back(0.0); }
+    bands.push_back(band);
+  }
 }
 
-// TODO: There's a bug here that's causing a segfault.
 void Graph::draw(SDL_Renderer *render) {
   if (vertical) {
-    SDL_Rect bg {BAR_X, (scale == 0 ? BAR_Y : BAR_Y*scale*BAR_SCALE), bands.size()*BAND_WIDTH, BAR_HEIGHT};
-    const auto [r, g, b] = colors.at(dataCount - 1);
+    SDL_Rect bg {BAR_X, Y(scale), static_cast<signed>(getFilledBandSize()*BAND_WIDTH), BAR_HEIGHT};
+    const auto [r, g, b] = colors[dataCount - 1];
     SDL_SetRenderDrawColor(render, r, g, b, 255);
     SDL_RenderFillRect(render, &bg);
 
     for (size_t i = 0; i < bands.size(); ++i) {
+      if (isBandEmpty(bands[i])) continue;
       for (size_t j = 0; j < dataCount; j++) {
-        SDL_Rect rect;
-        rect.x = BAR_X + (i * BAND_WIDTH);
-        rect.w = BAND_WIDTH;
-        rect.h = BAR_HEIGHT * (bands[i].at(j)/100);
-        rect.y = (scale == 0 ? BAR_Y : BAR_Y*scale*BAR_SCALE);
+        SDL_Rect rect {static_cast<signed>(BAR_X + (i * BAND_WIDTH)), Y(scale), BAND_WIDTH, static_cast<signed>(BAR_HEIGHT * (bands[i][j]/100))};
 
         if (j > 0) {
           for (int k = j-1; k >= 0; --k) {
-            rect.y += (BAR_HEIGHT * (bands[i].at(k)/100));
+            rect.y += (BAR_HEIGHT * (bands[i][k]/100));
           }
         }
 
-        const auto [cr, g, b] = colors.at(j);
-        SDL_SetRenderDrawColor(render, cr, g, b, 255);
+        const auto [r, g, b] = colors[j];
+        SDL_SetRenderDrawColor(render, r, g, b, 255);
         SDL_RenderFillRect(render, &rect);
       }
     }
   } else {
-    SDL_Rect bg {BAR_X, (scale == 0 ? BAR_Y : BAR_Y*scale*BAR_SCALE), BAR_WIDTH, BAR_HEIGHT};
-    const auto [r, g, b] = colors.at(dataCount - 1);
+    SDL_Rect bg {BAR_X, Y(scale), BAR_WIDTH, BAR_HEIGHT};
+    const auto [r, g, b] = colors[dataCount - 1];
     SDL_SetRenderDrawColor(render, r, g, b, 255);
     SDL_RenderFillRect(render, &bg);
 
     for (size_t i = 0; i < dataCount; i++) {
-      const auto [r, g, b] = colors.at(i);
-      SDL_SetRenderDrawColor(render, r, g, b, 255);
-      SDL_Rect rect;
-      rect.x = BAR_X;
-      rect.w = BAR_WIDTH * (data[i]/100);
-      rect.y = scale == 0 ? BAR_Y : 1 + BAR_Y*scale*BAR_SCALE;
-      rect.h = BAR_HEIGHT + 1;
+      SDL_Rect rect {BAR_X, Y(scale), static_cast<signed>(BAR_WIDTH * (data[i]/100)), BAR_HEIGHT + 1};
 
       if (i > 0) {
         for (int j = i-1; j >= 0; --j) {
@@ -56,6 +53,8 @@ void Graph::draw(SDL_Renderer *render) {
         }
       }
 
+      const auto [r, g, b] = colors[i];
+      SDL_SetRenderDrawColor(render, r, g, b, 255);
       SDL_RenderFillRect(render, &rect);
     }
   }
@@ -65,16 +64,29 @@ void Graph::setData(int index, double amount) {
   data[index] = amount;
 }
 
-void Graph::insertBand(const Band& band) {
+void Graph::insertBand(Band&& band) {
   if (bands.size() >= TOTAL_BANDS) {
     bands[currBandPos++] = band;
-    bands[TOTAL_BANDS - 1] = bands[0];
+    for (size_t i = bands.size() - 1; i > currBandPos; --i) {
+      bands[i] = bands[i - 1];
+    }
+
     if (currBandPos >= TOTAL_BANDS) currBandPos = 0;
-  } else {
-    bands.push_back(band);
   }
+
+  band.clear();
 }
 
 void Graph::toggleVertical() {
   vertical = 1 - vertical;
+}
+
+size_t Graph::getFilledBandSize() {
+  size_t result = 0;
+  for (auto b : bands) {
+    if (isBandEmpty(b)) break;
+    result++;
+  }
+
+  return result;
 }

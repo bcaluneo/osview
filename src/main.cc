@@ -42,15 +42,16 @@ int main(int argc, char **args) {
 	std::vector<Graph> graphs {
 		{"CPU Graph", 3, 0, {
 			{0, 128, 255}, // User color
-			{220, 0, 0}, // System color
-			{0, 220, 0} // Idle color
+			{220, 0, 0},   // System color
+			{0, 220, 0}    // Idle color
 		}},
 
 		{"Memory Usage Graph", 2, 1, {
-			{0, 220, 0}, // Inuse color
+			{0, 220, 0},  // Inuse color
 			{0, 128, 255} // Free color
 		}}
 	};
+
 	SDL_CreateThread(getData, "Data Thread", static_cast<void*>(graphs.data()));
 
 	SDL_Event event;
@@ -80,8 +81,8 @@ int main(int argc, char **args) {
 		bg.w = SCREEN_WIDTH;
 		bg.h = SCREEN_HEIGHT;
 
-		bar.x = BAR_X-1;
-		bar.y = BAR_Y-1;
+		bar.x = BAR_X - 1;
+		bar.y = BAR_Y - 1;
 		bar.w = BAR_WIDTH + 2;
 		bar.h = BAR_HEIGHT + 2 + 10;
 		SDL_RenderCopy(render, tex, NULL, &bg);

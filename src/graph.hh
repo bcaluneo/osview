@@ -1,7 +1,6 @@
 // Copyright (C) Brendan Caluneo
 
 #include <vector>
-#include <memory> // TODO: Doesn't compile without this?
 #include "SDL.h"
 #include "util.hh"
 
@@ -10,11 +9,11 @@
 
 class Graph {
   public:
-    Graph(std::string title, size_t dataCount, size_t scale, ColorArray colors);
+    Graph(std::string title, size_t dataCount, size_t scale, List<ColorTuple> colors);
 
     void draw(SDL_Renderer *render);
     void setData(int index, double amount);
-    void insertBand(const Band& band);
+    void insertBand(Band&& band);
     void toggleVertical();
 
   private:
@@ -24,9 +23,11 @@ class Graph {
     size_t dataCount = 0;
     size_t scale = 0;
 
-    ColorArray colors;
+    List<ColorTuple> colors;
     std::vector<double> data;
     std::vector<Band> bands;
+
+    size_t getFilledBandSize();
 };
 
 #endif
