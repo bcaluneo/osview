@@ -14,4 +14,16 @@ Here are some screenshots of my tool as it stands: <br/>
 <br/>
 ![Screenshot of osview](screenshots/prev2.png)
 <br/>
-This program measures the amount of time the system has been executing tasks in kernel mode, user mode, and the amount of time that it has spent idling. By default it polls this information every 200ms. More information can be found in the Windows Dev Center; specifically, [here](https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getsystemtimes). All the rendering is handled using the SDL2 library.
+This program measures the amount of time the system has been executing tasks in kernel mode, user mode, and the amount of time that it has spent idling. By default it polls this information every 150ms. More information can be found in the Windows Dev Center; specifically, [here](https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getsystemtimes). All the rendering is handled using the SDL2 library.
+
+## Building
+
+A precompiled binary is provided under the release section, but if you wish to build yourself:
+
+#### Dependencies
+* SDL2 (& SDL2 image)
+* Win32
+* make
+* C++ compiler, default is gcc
+
+The makefile does require you to configure the library and include directories for SDL2.
