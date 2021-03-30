@@ -17,13 +17,16 @@ $(EXE): $(OBJS)
 $(OBJS):
 	$(CC) $(FLAGS) -c $(@:%.o=src/%.cc) -o $(@:%.o=obj/%.o)
 
+run:
+	./bin/$(EXE).exe
+
 setup:
 	mkdir src
 	mkdir obj
 	mkdir bin
 
 zip:
-	tar -cvf "$(EXE)".tar bin/*
+	zip -r "$(EXE)".zip bin/*
 
 clean:
-	rm -f *.exe *.tar obj/*
+	rm -f *.exe *.zip obj/*

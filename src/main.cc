@@ -47,8 +47,8 @@ int main(int argc, char **args) {
 		}},
 
 		{"Memory Usage Graph", 2, 1, {
-			{0, 220, 0},  // Inuse color
-			{0, 128, 255} // Free color
+			{0, 128, 255},  // Inuse color
+			{0, 220, 0} // Free color
 		}}
 	};
 
