@@ -3,12 +3,8 @@
 #include "graph.hh"
 #include <iostream>
 
-// Macro to determine the Y of the graph given its ordering (called scale here)
-// TODO: change this.
-#define Y(scale) static_cast<signed>((scale == 0 ? BAR_Y : 1+BAR_Y*scale*BAR_SCALE))
-
-Graph::Graph(std::string title, size_t szData, size_t scale, List<ColorTuple> colors)
-                        : title(title), szData(szData), scale(scale), colors(colors) {
+Graph::Graph(std::string title, unsigned szData, SDL_Point pos, List<ColorTuple> colors)
+                       : title(title),   szData(szData),   pos(pos),             colors(colors) {
   data.resize(szData);
   for (size_t i = 0; i < TOTAL_BANDS; ++i) {
     Band band;
@@ -23,9 +19,12 @@ Graph::Graph(std::string title, size_t szData, size_t scale, List<ColorTuple> co
 // - render - a pointer to an SDL_Renderer instance
 // Result:
 // - none
-void Graph::draw(SDL_Renderer *render) {
+void Graph::draw(SDL_Texture *barTexture, SDL_Renderer *render) {
+  SDL_Rect barRect {pos.x - 1, pos.y - 1, BAR_WIDTH + 2, BAR_HEIGHT + 12};
+  SDL_RenderCopy(render, barTexture, NULL, &barRect);
+
   if (vertical) {
-    SDL_Rect bg {BAR_X, Y(scale), static_cast<signed>(getFilledBandSize()*BAND_WIDTH), BAR_HEIGHT + 1};
+    SDL_Rect bg {pos.x, pos.y, static_cast<signed>(getFilledBandSize()*BAND_WIDTH), BAR_HEIGHT + 1};
     const auto [r, g, b] = colors[szData - 1];
     SDL_SetRenderDrawColor(render, r, g, b, 255);
     SDL_RenderFillRect(render, &bg);
@@ -33,7 +32,7 @@ void Graph::draw(SDL_Renderer *render) {
     for (size_t i = 0; i < bands.size(); ++i) {
       if (isBandEmpty(bands[i])) continue;
       for (size_t j = 0; j < szData; j++) {
-        SDL_Rect rect {static_cast<signed>(BAR_X + (i * BAND_WIDTH)), Y(scale), BAND_WIDTH, static_cast<signed>(BAR_HEIGHT * (bands[i][j]/100))};
+        SDL_Rect rect {static_cast<signed>(pos.x + (i * BAND_WIDTH)), pos.y, BAND_WIDTH, static_cast<signed>(BAR_HEIGHT * (bands[i][j]/100))};
 
         if (j > 0) {
           for (int k = j-1; k >= 0; --k) {
@@ -47,13 +46,13 @@ void Graph::draw(SDL_Renderer *render) {
       }
     }
   } else {
-    SDL_Rect bg {BAR_X, Y(scale), BAR_WIDTH, BAR_HEIGHT};
+    SDL_Rect bg {pos.x, pos.y, BAR_WIDTH, BAR_HEIGHT};
     const auto [r, g, b] = colors[szData - 1];
     SDL_SetRenderDrawColor(render, r, g, b, 255);
     SDL_RenderFillRect(render, &bg);
 
     for (size_t i = 0; i < szData; i++) {
-      SDL_Rect rect {BAR_X, Y(scale), static_cast<signed>(BAR_WIDTH * (data[i]/100)), BAR_HEIGHT + 1};
+      SDL_Rect rect {pos.x, pos.y, static_cast<signed>(BAR_WIDTH * (data[i]/100)), BAR_HEIGHT + 1};
 
       if (i > 0) {
         for (int j = i-1; j >= 0; --j) {
@@ -86,11 +85,12 @@ void Graph::setData(int index, double amount) {
 // - band - the band to be inserted
 // Result:
 // - none
-void Graph::insertBand(Band&& band) {
-  bands[0] = band;
+void Graph::pushBand(Band&& band) {
   for (size_t i = bands.size() - 1; i > 0; --i) {
     bands[i] = bands[i - 1];
   }
+
+  bands[0] = band;
   band.clear();
 }
 

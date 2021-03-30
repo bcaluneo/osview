@@ -8,6 +8,7 @@
 
 #include <vector>
 #include "SDL.h"
+#include "SDL_image.h"
 #include "util.hh"
 
 #ifndef GRAPH_HH
@@ -15,18 +16,19 @@
 
 class Graph {
   public:
-    Graph(std::string title, size_t szData, size_t scale, List<ColorTuple> colors);
+    Graph(std::string title, unsigned szData, SDL_Point pos, List<ColorTuple> colors);
 
-    void draw(SDL_Renderer *render);
+    void draw(SDL_Texture *barTexture, SDL_Renderer *render);
     void setData(int index, double amount);
-    void insertBand(Band&& band);
+    void pushBand(Band&& band);
     void toggleVertical();
 
   private:
+
     std::string title;
+    unsigned szData = 0;
+    SDL_Point pos;
     bool vertical = 0;
-    size_t szData = 0;
-    size_t scale = 0;
 
     List<ColorTuple> colors;
     std::vector<double> data;

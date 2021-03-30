@@ -4,7 +4,6 @@
 #include "windows.h"
 #include "SDL.h"
 #include "SDL_thread.h"
-#include "SDL_image.h"
 #include "data.hh"
 #include "graph.hh"
 #include "util.hh"
@@ -33,20 +32,20 @@ int main(int argc, char **args) {
 	SDL_Texture *tex = SDL_CreateTextureFromSurface(render, surface);
 	SDL_FreeSurface(surface);
 	surface = IMG_Load("tex/bar.png");
-	SDL_Texture *tex2 = SDL_CreateTextureFromSurface(render, surface);
+	SDL_Texture *barTexture = SDL_CreateTextureFromSurface(render, surface);
 	SDL_FreeSurface(surface);
 
 	SDL_SetRenderDrawColor(render, 180, 180, 180, 255);
 	SDL_RenderClear(render);
 
 	std::vector<Graph> graphs {
-		{"CPU Graph", 3, 0, {
+		{"CPU Graph", 3, {BAR_X, BAR_Y}, {
 			{0, 128, 255}, // User color
 			{220, 0, 0},   // System color
 			{0, 220, 0}    // Idle color
 		}},
 
-		{"Memory Usage Graph", 2, 1, {
+		{"Memory Usage Graph", 2, {BAR_X, 1+(BAR_SCALE*BAR_Y)}, {
 			{0, 128, 255},  // Inuse color
 			{0, 220, 0} // Free color
 		}}
@@ -74,25 +73,11 @@ int main(int argc, char **args) {
 				}
 		}
 
-		SDL_Rect bg, bar;
-		bg.x = 0;
-		bg.y = 0;
-		bg.w = SCREEN_WIDTH;
-		bg.h = SCREEN_HEIGHT;
-
-		bar.x = BAR_X - 1;
-		bar.y = BAR_Y - 1;
-		bar.w = BAR_WIDTH + 2;
-		bar.h = BAR_HEIGHT + 2 + 10;
+		SDL_Rect bg {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
 		SDL_RenderCopy(render, tex, NULL, &bg);
 
-		// TODO: Change this so all the rendering for a graph is contained within the Graph module.
-		SDL_RenderCopy(render, tex2, NULL, &bar);
-		bar.y = BAR_Y*BAR_SCALE;
-		SDL_RenderCopy(render, tex2, NULL, &bar);
-
 		for (auto g : graphs) {
-			g.draw(render);
+			g.draw(barTexture, render);
 		}
 
 		SDL_RenderPresent(render);

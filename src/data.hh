@@ -57,14 +57,14 @@ int getData(void *data) {
 		g[0].setData(0, percent(userTime, total));
 		g[0].setData(1, percent(actKernel, total));
 		g[0].setData(2, percent(idleTime, total));
-		g[0].insertBand({ percent(userTime, total),
+		g[0].pushBand({ percent(userTime, total),
 			                percent(actKernel, total),
 									    percent(idleTime, total)
 										});
 
 		g[1].setData(0, double(memStatus.dwMemoryLoad));
 		g[1].setData(1, 100-double(memStatus.dwMemoryLoad));
-		g[1].insertBand({ double(memStatus.dwMemoryLoad),
+		g[1].pushBand({ double(memStatus.dwMemoryLoad),
 										  100-double(memStatus.dwMemoryLoad)
 										});
 	}
