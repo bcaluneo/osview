@@ -1,8 +1,6 @@
 # osview
 
-What is "osview"? Back in the days of Silicon Graphics's supremacy over
-the performance computing market, their operating system, IRIX, featured
-a graphical system monitoring tool called "gr_osview". A screenshot of this
+_osview_ is a graphical system resource monitoring tool featured in Silicon Graphics's IRIX operating system. A screenshot of this
 tool is below: <br/>
 ![Screenshot of gr_osview](screenshots/gr_osview.gif)
 <br/>
