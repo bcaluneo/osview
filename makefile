@@ -4,6 +4,7 @@ EXE = osview
 FLAGS = -std=c++17
 FLAGS += -Wall
 FLAGS += -ID:\SDL64\include\SDL2 -LD:\SDL64\lib
+FLAGS += -static-libgcc -static-libstdc++
 FLAGS += -lmingw32 -lSDL2main -lSDL2 -lSDL2_image
 
 FLAGS += -Wl,--subsystem,windows

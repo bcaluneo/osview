@@ -7,6 +7,7 @@
 // - arbitrary amount of data points with specificed colors.
 
 #include <vector>
+#include <string>
 #include "SDL.h"
 #include "SDL_image.h"
 #include "util.hh"
