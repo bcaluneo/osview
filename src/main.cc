@@ -2,11 +2,17 @@
 
 #define _WIN32_WINNT 0x0501
 #include "windows.h"
+#include "sysinfoapi.h"
 #include "SDL.h"
 #include "SDL_thread.h"
+#include "SDL_ttf.h"
 #include "data.hh"
 #include "graph.hh"
 #include "util.hh"
+#include <plog/Log.h>
+#include "plog/Initializers/RollingFileInitializer.h"
+#include <winternl.h>
+#include "NFont.h"
 
 bool quit = 0;
 SDL_Window *window;
@@ -14,7 +20,10 @@ SDL_Renderer *render;
 
 int main(int argc, char **args) {
 	SDL_Init(SDL_INIT_VIDEO);
+	TTF_Init();
 	IMG_Init(IMG_INIT_PNG);
+	plog::init(plog::debug, "osview.log");
+	PLOG_INFO << "OSVIEW is starting.";
 
 	window = SDL_CreateWindow("osview", SDL_WINDOWPOS_CENTERED,
 														          SDL_WINDOWPOS_CENTERED,
@@ -54,6 +63,7 @@ int main(int argc, char **args) {
 	SDL_CreateThread(getData, "Data Thread", static_cast<void*>(graphs.data()));
 
 	SDL_Event event;
+
 	while (!quit) {
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
@@ -84,6 +94,7 @@ int main(int argc, char **args) {
 		SDL_Delay(1000/60);
 	}
 
+	PLOG_INFO << "OSVIEW is stopping.";
 	SDL_Quit();
 	return 0;
 }

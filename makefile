@@ -3,14 +3,13 @@ EXE = osview
 
 FLAGS = -std=c++17
 FLAGS += -Wall
-FLAGS += -ID:\SDL64\include\SDL2 -LD:\SDL64\lib
+FLAGS += -ID:\SDL64\include\SDL2 -LD:\SDL64\lib -Iinclude
 FLAGS += -static-libgcc -static-libstdc++
-FLAGS += -lmingw32 -lSDL2main -lSDL2 -lSDL2_image
+FLAGS += -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf -l:libntdll.a
 
 FLAGS += -Wl,--subsystem,windows
 
-OBJS = main.o \
-			 graph.o
+OBJS = main.o graph.o nfont/NFont.o nfont/SDL_FontCache.o
 
 $(EXE): $(OBJS)
 	$(CC) $(^:%.o=obj/%.o) $(FLAGS) -o bin/$@
