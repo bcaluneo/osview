@@ -18,6 +18,42 @@ bool quit = 0;
 SDL_Window *window;
 SDL_Renderer *render;
 
+std::vector<Graph> graphs {
+	{"CPU Graph", 3, {BAR_X, BAR_Y}, {
+		{0, 128, 255}, // User color
+		{220, 0, 0},   // System color
+		{0, 220, 0}    // Idle color
+	}},
+
+	{"Memory Usage Graph", 2, {BAR_X, 1+(BAR_SCALE*BAR_Y)}, {
+		{0, 128, 255},  // Inuse color
+		{0, 220, 0} // Free color
+	}}
+};
+
+int renderScreen(void *data) {
+	SDL_Surface *surface = IMG_Load("tex/bg.png");
+	SDL_Texture *tex = SDL_CreateTextureFromSurface(render, surface);
+	SDL_FreeSurface(surface);
+	surface = IMG_Load("tex/bar.png");
+	SDL_Texture *barTexture = SDL_CreateTextureFromSurface(render, surface);
+	SDL_FreeSurface(surface);
+
+	while (!quit) {
+		SDL_Rect bg {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
+		SDL_RenderCopy(render, tex, NULL, &bg);
+
+		for (auto g : graphs) {
+			g.draw(barTexture, render);
+		}
+
+		SDL_RenderPresent(render);
+		SDL_Delay(1000/60);
+	}
+
+	return 0;
+}
+
 int main(int argc, char **args) {
 	SDL_Init(SDL_INIT_VIDEO);
 	TTF_Init();
@@ -37,30 +73,11 @@ int main(int argc, char **args) {
 	SDL_SetWindowIcon(window, icon);
 	SDL_FreeSurface(icon);
 
-	SDL_Surface *surface = IMG_Load("tex/bg.png");
-	SDL_Texture *tex = SDL_CreateTextureFromSurface(render, surface);
-	SDL_FreeSurface(surface);
-	surface = IMG_Load("tex/bar.png");
-	SDL_Texture *barTexture = SDL_CreateTextureFromSurface(render, surface);
-	SDL_FreeSurface(surface);
-
 	SDL_SetRenderDrawColor(render, 180, 180, 180, 255);
 	SDL_RenderClear(render);
 
-	std::vector<Graph> graphs {
-		{"CPU Graph", 3, {BAR_X, BAR_Y}, {
-			{0, 128, 255}, // User color
-			{220, 0, 0},   // System color
-			{0, 220, 0}    // Idle color
-		}},
-
-		{"Memory Usage Graph", 2, {BAR_X, 1+(BAR_SCALE*BAR_Y)}, {
-			{0, 128, 255},  // Inuse color
-			{0, 220, 0} // Free color
-		}}
-	};
-
 	SDL_CreateThread(getData, "Data Thread", static_cast<void*>(graphs.data()));
+	SDL_CreateThread(renderScreen, "Render Thread", nullptr);
 
 	SDL_Event event;
 
@@ -83,14 +100,6 @@ int main(int argc, char **args) {
 				}
 		}
 
-		SDL_Rect bg {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
-		SDL_RenderCopy(render, tex, NULL, &bg);
-
-		for (auto g : graphs) {
-			g.draw(barTexture, render);
-		}
-
-		SDL_RenderPresent(render);
 		SDL_Delay(1000/60);
 	}
 
