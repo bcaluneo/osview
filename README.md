@@ -19,9 +19,11 @@ This program measures the amount of time the system has been executing tasks in 
 A precompiled binary is provided under the release section, but if you wish to build yourself:
 
 #### Dependencies
-* SDL2 (& SDL2 image)
+* SDL2 (SDL2image and SDL2ttf)
+* [NFont](https://github.com/grimfang4/nfont) by grimfang4
+* [plog](https://github.com/SergiusTheBest/plog) by SergiusTheBest
 * Win32
 * make
-* C++ compiler, default is gcc
+* C++ compiler, default is g++
 
 The makefile does require you to configure the library and include directories for SDL2.
