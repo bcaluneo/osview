@@ -29,6 +29,8 @@ void Graph::draw(SDL_Point pos, SDL_Texture *barTexture, NFont &font, SDL_Render
   SDL_RenderDrawRect(render, &barRect);
 
   if (vertical) {
+    // TODO: Fix this later, this stuff is borked.
+    
     // SDL_Rect bg {pos.x, pos.y, static_cast<signed>(getFilledBandSize()*BAND_WIDTH), BAR_HEIGHT + 1};
     // const auto [r, g, b] = colors[szData - 1];
     // SDL_SetRenderDrawColor(render, r, g, b, 255);
