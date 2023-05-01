@@ -11,16 +11,18 @@
 #ifndef UTIL_HH
 #define UTIL_HH
 
-constexpr size_t SCREEN_WIDTH = 640;
-constexpr size_t SCREEN_HEIGHT = 240;
-constexpr size_t BAR_X = 15;
+constexpr size_t BAR_X = 10;
 constexpr size_t BAR_Y = 40;
 constexpr size_t BAR_SCALE = 4;
-constexpr size_t BAR_WIDTH = SCREEN_WIDTH - (BAR_X*2);
+constexpr size_t BAR_WIDTH = 380;
 constexpr size_t BAR_HEIGHT = 50;
-constexpr size_t POLL_TIME = 150;
-constexpr size_t BAND_WIDTH = 5;
+constexpr size_t POLL_TIME = 250;
+constexpr size_t BAND_WIDTH = 4;
 constexpr size_t TOTAL_BANDS = BAR_WIDTH / BAND_WIDTH;
+constexpr size_t COLUMN_COUNT = 2;
+
+const size_t VERTICAL_SPACING = 50;
+const size_t HORIZONTAL_SPACING = 50;
 
 // Description:
 // - List, wrapper around a vector of same-type arguments

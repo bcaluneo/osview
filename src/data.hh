@@ -6,67 +6,64 @@
 // - Polls the system to retrieve data to feed on-screen bar graphs.
 
 #include <cstdint>
+#include <memory>
 #include "graph.hh"
 #include "util.hh"
+#include "sysinfoapi.h"
+#include <winternl.h>
+#include <chrono>
 
 #ifndef DATA_HH
 #define DATA_HH
 
 extern bool quit;
+extern std::vector<Graph> graphs;
+extern std::atomic_int coreCount;
 
 #define percent(a, b) (a*100/b)
 
-void computeTime(FILETIME &result, const FILETIME &start, const FILETIME &end) {
-	ULARGE_INTEGER largeStart = { 0 };
-	largeStart.LowPart = start.dwLowDateTime;
-	ULARGE_INTEGER largeEnd = { 0 };
-	largeEnd.LowPart = end.dwLowDateTime;
-	largeStart.QuadPart = largeEnd.QuadPart - largeStart.QuadPart;
-	result.dwLowDateTime = largeStart.LowPart;
-}
-
 int getData(void *data) {
-	Graph *g = static_cast<Graph*>(data);
-
 	while (!quit) {
-		FILETIME a0, a1, a2, b0, b1, b2;
-		GetSystemTimes(&a0, &a1, &a2);
-		SDL_Delay(POLL_TIME);
-		GetSystemTimes(&b0, &b1, &b2);
-
 		MEMORYSTATUSEX memStatus;
 		memStatus.dwLength = sizeof (memStatus);
 		GlobalMemoryStatusEx(&memStatus);
 
-		FILETIME finalIdle, finalKernel, finalUser;
+		std::unique_ptr<SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION> processorDataThen(new SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION[coreCount.load()]);
+		std::unique_ptr<SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION> processorDataNow(new SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION[coreCount.load()]);
 
-		computeTime(finalIdle, a0, b0);
-		computeTime(finalKernel, a1, b1);
-		computeTime(finalUser, a2, b2);
+		NtQuerySystemInformation(SystemProcessorPerformanceInformation, processorDataThen.get(), sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION) * coreCount.load(), NULL);
+		SDL_Delay(POLL_TIME);
+		NtQuerySystemInformation(SystemProcessorPerformanceInformation, processorDataNow.get(), sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION) * coreCount.load(), NULL);
 
-		double idleTime, kernelTime, userTime;
+		for (size_t i = 0; i < graphs.size(); ++i) {
+			Graph &g = graphs[i];
+			if ("Memory Usage" == g.getTitle()) {
+				g.setData("inuse", double(memStatus.dwMemoryLoad));
+				g.setData("free", 100-double(memStatus.dwMemoryLoad));
+				g.pushBand({ double(memStatus.dwMemoryLoad),
+												100-double(memStatus.dwMemoryLoad)
+												});
+			} else {
+				// This assumes all the graphs are in the correct order.
+				auto processorInformationThen = processorDataThen.get()[i];
+				auto processorInformationNow = processorDataNow.get()[i];
 
-		idleTime = finalIdle.dwLowDateTime;
-		kernelTime = finalKernel.dwLowDateTime;
-		userTime = finalUser.dwLowDateTime;
+				auto idleTime = processorInformationNow.IdleTime.QuadPart - processorInformationThen.IdleTime.QuadPart;
+				auto kernelTime = processorInformationNow.KernelTime.QuadPart - processorInformationThen.KernelTime.QuadPart;
+				auto userTime = processorInformationNow.UserTime.QuadPart - processorInformationThen.UserTime.QuadPart;
+				auto actKernelTime = kernelTime - idleTime;
+				double total = (kernelTime+userTime); // ker + idl + usr
 
-		double total = (kernelTime+userTime); // ker + idl + usr
-		// double cpu = (kernelTime+userTime-idleTime)*100 / total;
-		double actKernel = kernelTime - idleTime;
-
-		g[0].setData(0, percent(userTime, total));
-		g[0].setData(1, percent(actKernel, total));
-		g[0].setData(2, percent(idleTime, total));
-		g[0].pushBand({ percent(userTime, total),
-			                percent(actKernel, total),
-									    percent(idleTime, total)
-										});
-
-		g[1].setData(0, double(memStatus.dwMemoryLoad));
-		g[1].setData(1, 100-double(memStatus.dwMemoryLoad));
-		g[1].pushBand({ double(memStatus.dwMemoryLoad),
-										  100-double(memStatus.dwMemoryLoad)
-										});
+				g.setData("usr", percent(userTime, total));
+				g.setData("sys", percent(actKernelTime, total));
+				g.setData("idl", percent(idleTime, total));
+				g.pushBand({ 
+					percent(userTime, total),
+					percent(actKernelTime, total),
+					percent(idleTime, total)
+				});
+			}
+		}
 	}
 
 	return 0;
