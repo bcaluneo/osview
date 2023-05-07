@@ -8,6 +8,8 @@
 
 #include <vector>
 #include <string>
+#include <cmath>
+#include <algorithm>
 #include "SDL.h"
 #include "SDL_image.h"
 #include "util.hh"
@@ -23,8 +25,8 @@ class Graph {
     Graph(std::string title, std::map<std::string, ColorTuple> dataInfo);
 
     void draw(SDL_Point pos, SDL_Texture *barTexture, NFont &font, SDL_Renderer *render);
-    void setData(std::string key, double amount);
-    void pushBand(Band&& band);
+    void setData(std::string key, signed amount);
+    void addBand(Band&& band);
     void toggleVertical();
     std::string getTitle();
 
@@ -32,10 +34,10 @@ class Graph {
 
     std::string title;
     unsigned szData = 0;
-    bool vertical = 0;
+    bool isVertical = false;
 
     std::map<std::string, ColorTuple> dataInfo;
-    std::map<std::string, double> data;
+    std::map<std::string, signed> data;
     std::vector<Band> bands;
 
     size_t getFilledBandSize();

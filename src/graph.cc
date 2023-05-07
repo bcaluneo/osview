@@ -1,7 +1,6 @@
 // Copyright (C) Brendan Caluneo
 
 #include "graph.hh"
-#include <iostream>
 
 inline void drawTextWithShadow(SDL_Renderer *render, std::string msg, NFont &font, int x, int y, NFont::Color col) {
 	font.draw(render, x + 2, y + 2, NFont::Color(0, 0, 0, 255), msg.c_str());
@@ -9,13 +8,7 @@ inline void drawTextWithShadow(SDL_Renderer *render, std::string msg, NFont &fon
 }
 
 Graph::Graph(std::string title, std::map<std::string, ColorTuple> dataInfo)
-                       : title(title), dataInfo(dataInfo) {
-  for (size_t i = 0; i < TOTAL_BANDS; ++i) {
-    Band band;
-    for (size_t j = 0; j < dataInfo.size(); ++j) { band.push_back(0.0); }
-    bands.push_back(band);
-  }
-}
+                       : title(title), dataInfo(dataInfo) {}
 
 // Description:
 // - Draws the bar graph.
@@ -24,45 +17,53 @@ Graph::Graph(std::string title, std::map<std::string, ColorTuple> dataInfo)
 // Result:
 // - none
 void Graph::draw(SDL_Point pos, SDL_Texture *barTexture, NFont &font, SDL_Renderer *render) {
-  SDL_Rect barRect {pos.x - 1, pos.y - 1, BAR_WIDTH + 2, BAR_HEIGHT + 3};
+  SDL_Rect barRect {pos.x - 1, pos.y - 1, BAR_WIDTH + 2, BAR_HEIGHT + 2};
   SDL_SetRenderDrawColor(render, 0, 0, 0, 255);
   SDL_RenderDrawRect(render, &barRect);
 
-  if (vertical) {
-    // TODO: Fix this later, this stuff is borked.
-    
-    // SDL_Rect bg {pos.x, pos.y, static_cast<signed>(getFilledBandSize()*BAND_WIDTH), BAR_HEIGHT + 1};
-    // const auto [r, g, b] = colors[szData - 1];
-    // SDL_SetRenderDrawColor(render, r, g, b, 255);
-    // SDL_RenderFillRect(render, &bg);
+  if (isVertical) {
+    for (size_t i = 0; i < bands.size(); ++i) {
+      if (isBandEmpty(bands[i])) continue;
 
-    // for (size_t i = 0; i < bands.size(); ++i) {
-    //   if (isBandEmpty(bands[i])) continue;
-    //   for (size_t j = 0; j < szData; j++) {
-    //     SDL_Rect rect {static_cast<signed>(pos.x + (i * BAND_WIDTH)), pos.y, BAND_WIDTH, static_cast<signed>(BAR_HEIGHT * (bands[i][j]/100))};
-
-    //     if (j > 0) {
-    //       for (int k = j-1; k >= 0; --k) {
-    //         rect.y += (BAR_HEIGHT * (bands[i][k]/100));
-    //       }
-    //     }
-
-    //     const auto [r, g, b] = colors[j];
-    //     SDL_SetRenderDrawColor(render, r, g, b, 255);
-    //     SDL_RenderFillRect(render, &rect);
-    //   }
-    // }
+      auto band = bands[i];
+      auto previousHeight = 0;
+      for (auto pair : band) {
+        auto key = pair.first;
+        auto height = pair.second;
+        if (height == 0) continue;
+        SDL_Rect rect {static_cast<signed>(pos.x + (i * BAND_WIDTH)), previousHeight + pos.y, BAND_WIDTH, height};
+        previousHeight += height;
+        const auto [r, g, b] = dataInfo[key];
+        SDL_SetRenderDrawColor(render, r, g, b, 255);
+        SDL_RenderFillRect(render, &rect);
+      }
+    }
   } else {
     auto previousWidth = 0;
-    for (const auto& [key, data] : data) {
-      auto width = static_cast<signed>(BAR_WIDTH * (data/100));
-      SDL_Rect rect {previousWidth + pos.x, pos.y, width, BAR_HEIGHT + 1};
+    for (const auto& [key, width] : data) {
+      if (width == 0) continue;
+      SDL_Rect rect {previousWidth + pos.x, pos.y, width, BAR_HEIGHT};
       previousWidth += width;
 
-      const auto [r, g, b] = dataInfo[key];
+
+      const auto& [r, g, b] = dataInfo[key];
       SDL_SetRenderDrawColor(render, r, g, b, 255);
       SDL_RenderFillRect(render, &rect);
     }
+  }
+
+  //Draw the lower rect
+  auto lowerRectHeight = 8;
+  SDL_Rect lowerRect {pos.x - 1, pos.y + BAR_HEIGHT + 1, BAR_WIDTH + 2, lowerRectHeight};
+  SDL_SetRenderDrawColor(render, 0, 0, 0, 255);
+  SDL_RenderFillRect(render, &lowerRect);
+
+  auto tickCount = 10;
+  auto tickSpace = BAR_WIDTH / tickCount;
+  for (size_t i = 1; i < tickCount; ++i) {
+    SDL_Rect lowerRect {pos.x - 1 + (i*tickSpace), pos.y + BAR_HEIGHT + 1, 1, lowerRectHeight / 2};
+    SDL_SetRenderDrawColor(render, 255, 216, 0, 255);
+    SDL_RenderFillRect(render, &lowerRect);
   }
 
   drawTextWithShadow(render, title.c_str(), font, pos.x, pos.y - font.getHeight() - 6, NFont::Color(255, 255, 255, 255));
@@ -85,7 +86,7 @@ void Graph::draw(SDL_Point pos, SDL_Texture *barTexture, NFont &font, SDL_Render
 // - amount - the value to set
 // Result:
 // - none
-void Graph::setData(std::string key, double amount) {
+void Graph::setData(std::string key, signed amount) {
   data[key] = amount;
 }
 
@@ -96,13 +97,16 @@ void Graph::setData(std::string key, double amount) {
 // - band - the band to be inserted
 // Result:
 // - none
-void Graph::pushBand(Band&& band) {
-  for (size_t i = bands.size() - 1; i > 0; --i) {
-    bands[i] = bands[i - 1];
+void Graph::addBand(Band&& band) {
+  if (bands.size() >= TOTAL_BANDS) {
+    for (size_t i = bands.size() - 1; i > 0; --i) {
+      bands[i] = bands[i - 1];
+    }
+    
+    bands[0] = band;
+  } else {
+    bands.insert(bands.begin(), band);
   }
-
-  bands[0] = band;
-  band.clear();
 }
 
 // Description:
@@ -112,7 +116,7 @@ void Graph::pushBand(Band&& band) {
 // Result:
 // - none
 void Graph::toggleVertical() {
-  vertical = 1 - vertical;
+  isVertical = !isVertical;
 }
 
 // Description:

@@ -17,17 +17,17 @@
 #include "graph.hh"
 #include "util.hh"
 
-bool quit = 0;
+bool quit = false;
 SDL_Window *window;
 SDL_Renderer *render;
 
-size_t screenWidth = 960;
-std::atomic_int screenHeight;
+std::atomic_int screenWidth, screenHeight;
 std::atomic_int coreCount;
 
 std::vector<Graph> graphs;
 
 int renderScreen(void *data) {
+		try {
 	SDL_Surface *surface = IMG_Load("tex/bg.png");
 	SDL_Texture *tex = SDL_CreateTextureFromSurface(render, surface);
 	SDL_FreeSurface(surface);
@@ -35,33 +35,44 @@ int renderScreen(void *data) {
 	SDL_Texture *barTexture = SDL_CreateTextureFromSurface(render, surface);
 	SDL_FreeSurface(surface);
 
-	NFont font(render, "resources/consola.ttf", 23);
-
-	auto totalWidth = (BAR_WIDTH*COLUMN_COUNT) + (HORIZONTAL_SPACING*(COLUMN_COUNT - 1));
-	auto cx = (screenWidth - totalWidth) / 2;
+	NFont font(render, "resources/consola.ttf", 20);
 
 	while (!quit) {
-		SDL_Rect bg {0, 0, screenWidth, screenHeight.load()};
+		SDL_Rect bg {0, 0, screenWidth.load(), screenHeight.load()};
 		SDL_SetRenderDrawColor(render, 60, 60, 60, 255);
 	    SDL_RenderFillRect(render, &bg);
 
-		for (signed i = 0; i < graphs.size(); i += 2) {
-			std::vector<Graph> columns;
-			columns.push_back(graphs[i]);
-			if (i != graphs.size() - 1) columns.push_back(graphs[i + 1]);
+		if (graphs.size() == 1) {
+			Graph g = graphs[0];
+			signed barX = (screenWidth.load() - BAR_WIDTH) / 2;
+			SDL_Point pos {barX, BAR_Y};
+			g.draw(pos, barTexture, font, render);
+		} else {
+			auto totalWidth = (BAR_WIDTH*COLUMN_COUNT) + (HORIZONTAL_SPACING*(COLUMN_COUNT - 1));
+			auto cx = (screenWidth.load() - totalWidth) / 2;
 
-			for (signed j = 0; j < columns.size(); ++j) {
-				Graph g = columns[j];
-				signed barX = cx + ((j%2)*(BAR_WIDTH+HORIZONTAL_SPACING));
-				signed barY = BAR_Y + (i*VERTICAL_SPACING);
-				SDL_Point pos {barX, barY};
-				g.draw(pos, barTexture, font, render);
+			for (signed i = 0; i < graphs.size(); i += 2) {
+				std::vector<Graph> columns;
+				columns.push_back(graphs[i]);
+				if (i != graphs.size() - 1) columns.push_back(graphs[i + 1]);
+
+				for (signed j = 0; j < columns.size(); ++j) {
+					Graph g = columns[j];
+					signed barX = cx + ((j%2)*(BAR_WIDTH+HORIZONTAL_SPACING));
+					signed barY = BAR_Y + (i*VERTICAL_SPACING);
+					SDL_Point pos {barX, barY};
+					g.draw(pos, barTexture, font, render);
+				}
 			}
 		}
 
 		SDL_RenderPresent(render);
 		SDL_Delay(1000/60);
 	}
+	} catch(const std::exception& exception) {
+		PLOG_ERROR << "ERROR " << exception.what();
+	}
+
 
 	return 0;
 }
@@ -79,29 +90,30 @@ int main(int argc, char **args) {
 	for (unsigned i = 0; i < coreCount.load(); ++i) {
 		std::string graphTitle = "CPU" + std::to_string(i) + " Usage";
 		Graph g {graphTitle, {
-			{ "usr", ColorTuple {0, 128, 255} }, // User color
-			{ "sys", ColorTuple {220, 0, 0} },   // System color
-			{ "idl", ColorTuple {0, 220, 0} }    // Idle color
+			{ CPU_USER_STRING, ColorTuple {0, 128, 255} }, // User color
+			{ CPU_KERNEL_STRING, ColorTuple {220, 0, 0} },   // System color
+			{ CPU_IDLE_STRING, ColorTuple {0, 200, 0} }    // Idle color
 		}};
 
 		graphs.push_back(g);
 	}
 
-	Graph memGraph 	{
+	Graph memGraph {
 		"Memory Usage", {
-			{ "inuse", ColorTuple {0, 128, 255} },  // Inuse color
-			{ "free", ColorTuple {0, 220, 0} } // Free color
+			{ MEM_FREE_STRING, ColorTuple {0, 200, 0} }, // Free color
+			{ MEM_INUSE_STRING, ColorTuple {0, 128, 255} }  // Inuse color
 	}};
 	graphs.push_back(memGraph);
-	
+
 	PLOG_INFO << "Discovered " << coreCount.load() << " total processors.";
 	PLOG_INFO << "Rendering " << graphs.size() << " graphs.";
 
-	screenHeight.store((BAR_HEIGHT+VERTICAL_SPACING)*std::ceil(((graphs.size() + 1) / 2)));
+	screenWidth.store((BAR_WIDTH+HORIZONTAL_SPACING)*(graphs.size() > 1 ? 2 : 1));
+	screenHeight.store((BAR_HEIGHT+VERTICAL_SPACING)*std::ceil(((graphs.size() + 1) / 2)) + VERTICAL_SPACING / 2);
 
 	window = SDL_CreateWindow("osview", SDL_WINDOWPOS_CENTERED,
 														          SDL_WINDOWPOS_CENTERED,
-																			screenWidth,
+																			screenWidth.load(),
 																			screenHeight.load(),
 																			SDL_WINDOW_SHOWN);
 	render = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
@@ -123,7 +135,7 @@ int main(int argc, char **args) {
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
 				case SDL_QUIT:
-					quit = 1;
+					quit = true;
 					break;
 				case SDL_KEYUP:
 					auto k = event.key.keysym.sym;
