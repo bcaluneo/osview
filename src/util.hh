@@ -21,6 +21,9 @@ const std::string CPU_IDLE_STRING = "idle";
 const std::string MEM_FREE_STRING = "free";
 const std::string MEM_INUSE_STRING = "inuse";
 
+const std::string DRIVE_FREE_STRING = "free";
+const std::string DRIVE_INUSE_STRING = "inuse";
+
 const size_t BAR_X = 10;
 const size_t BAR_Y = 40;
 const size_t BAR_SCALE = 4;

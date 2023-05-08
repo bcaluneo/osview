@@ -20,6 +20,9 @@
 bool quit = false;
 SDL_Window *window;
 SDL_Renderer *render;
+extern std::mutex graphLock;
+
+std::vector<std::string> driveStrings;
 
 std::atomic_int screenWidth, screenHeight;
 std::atomic_int coreCount;
@@ -41,6 +44,7 @@ int renderScreen(void *data) {
 		SDL_SetRenderDrawColor(render, 60, 60, 60, 255);
 	    SDL_RenderFillRect(render, &bg);
 
+		std::lock_guard<std::mutex> lock(graphLock);
 		if (graphs.size() == 1) {
 			Graph g = graphs[0];
 			signed barX = (screenWidth.load() - BAR_WIDTH) / 2;
@@ -72,6 +76,16 @@ int renderScreen(void *data) {
 	return 0;
 }
 
+void populateDriveStrings() {
+	std::unique_ptr<char> logicalDriveStrings(new char[MAX_PATH]);
+	GetLogicalDriveStrings(MAX_PATH, logicalDriveStrings.get());
+	char *current = logicalDriveStrings.get();
+	while(*current) {
+		driveStrings.push_back(std::string { current });
+		current += strlen(current) + 1;
+	}
+}
+
 int main(int argc, char **args) {
 	SDL_Init(SDL_INIT_VIDEO);
 	TTF_Init();
@@ -100,7 +114,20 @@ int main(int argc, char **args) {
 	}};
 	graphs.push_back(memGraph);
 
-	PLOG_INFO << "Discovered " << coreCount.load() << " total processors.";
+	populateDriveStrings();
+
+	PLOG_INFO << "processorCount = " << coreCount.load() << ", driveCount = " << driveStrings.size() << ", drives = " << driveStrings;
+
+	for (std::string drive : driveStrings) {
+		Graph driveGraph {
+			drive + " Usage", {
+				{ DRIVE_FREE_STRING, ColorTuple {0, 200, 0} }, // Free color
+				{ DRIVE_INUSE_STRING, ColorTuple {0, 128, 255} }  // Inuse color
+		}};
+
+		graphs.push_back(driveGraph);
+	}
+
 	PLOG_INFO << "Rendering " << graphs.size() << " graphs.";
 
 	screenWidth.store((BAR_WIDTH+HORIZONTAL_SPACING)*(graphs.size() > 1 ? 2 : 1));

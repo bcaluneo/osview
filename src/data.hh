@@ -11,13 +11,17 @@
 #include <memory>
 #include <cmath>
 #include <array>
+#include <utility>
 
 #ifndef DATA_HH
 #define DATA_HH
 
+std::mutex graphLock;
+
 extern bool quit;
 extern std::vector<Graph> graphs;
 extern std::atomic_int coreCount;
+extern std::vector<std::string> driveStrings;
 
 #define percent(a, b) (a*100.0/b)
 
@@ -43,6 +47,8 @@ void transformData(std::array<double, N> &input, signed value) {
 }
 
 int getData(void *data) {
+	std::map<std::string, std::pair<size_t, size_t>> driveUsageMap;
+
 	while (!quit) {
 		MEMORYSTATUSEX memStatus;
 		memStatus.dwLength = sizeof (memStatus);
@@ -55,6 +61,19 @@ int getData(void *data) {
 		SDL_Delay(POLL_TIME);
 		NtQuerySystemInformation(SystemProcessorPerformanceInformation, processorDataNow.get(), sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION) * coreCount.load(), NULL);
 
+		for (std::string drive : driveStrings) {
+			ULARGE_INTEGER totalBytes, freeBytes;
+			auto isSuccess = GetDiskFreeSpaceExA(drive.c_str(), nullptr, &totalBytes, &freeBytes);
+			if (isSuccess) {
+				driveUsageMap.insert(std::make_pair(drive, std::make_pair(freeBytes.QuadPart, totalBytes.QuadPart)));
+			} else {
+				PLOG_ERROR << "Failed to retrieve disk usage information with error code " << GetLastError();
+			}
+		}
+
+		PLOG_INFO << "diskUsageMap = " << driveUsageMap;
+
+		std::lock_guard<std::mutex> lock(graphLock);
 		for (size_t i = 0; i < graphs.size(); ++i) {
 			Graph &g = graphs[i];
 			if ("Memory Usage" == g.getTitle()) {
@@ -69,7 +88,7 @@ int getData(void *data) {
 					{ MEM_INUSE_STRING, signed(verticalDataArray[0]) },
 					{ MEM_FREE_STRING, signed(verticalDataArray[1]) }
 				});
-			} else {
+			} else if (g.getTitle().find("CPU") != std::string::npos) {
 				// This assumes all the graphs are in the correct order.
 				auto processorInformationThen = processorDataThen.get()[i];
 				auto processorInformationNow = processorDataNow.get()[i];
@@ -97,6 +116,25 @@ int getData(void *data) {
 					{ CPU_USER_STRING, signed(verticalDataArray[0]) },
 					{ CPU_KERNEL_STRING, signed(verticalDataArray[1]) },
 					{ CPU_IDLE_STRING, signed(verticalDataArray[2]) }
+				});
+			}
+
+			if (driveUsageMap.find(g.getTitle().substr(0, 3)) != driveUsageMap.end()) {
+				auto driveUsageBytes = driveUsageMap[g.getTitle().substr(0, 3)];
+
+				double usedPercent = percent(driveUsageBytes.first, driveUsageBytes.second);
+
+				std::array<double, 2> horizontalDataArray { usedPercent, 100-usedPercent };
+				std::array<double, 2> verticalDataArray { usedPercent, 100-usedPercent };
+				transformData(horizontalDataArray, BAR_WIDTH);
+				transformData(verticalDataArray, BAR_HEIGHT);
+				
+				g.setData(DRIVE_INUSE_STRING, signed(horizontalDataArray[0]));
+				g.setData(DRIVE_FREE_STRING, signed(horizontalDataArray[1]));
+
+				g.addBand({ 
+					{ DRIVE_INUSE_STRING, signed(verticalDataArray[0]) },
+					{ DRIVE_FREE_STRING, signed(verticalDataArray[1]) }
 				});
 			}
 		}
