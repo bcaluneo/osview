@@ -27,7 +27,6 @@ std::atomic_int coreCount;
 std::vector<Graph> graphs;
 
 int renderScreen(void *data) {
-		try {
 	SDL_Surface *surface = IMG_Load("tex/bg.png");
 	SDL_Texture *tex = SDL_CreateTextureFromSurface(render, surface);
 	SDL_FreeSurface(surface);
@@ -69,10 +68,6 @@ int renderScreen(void *data) {
 		SDL_RenderPresent(render);
 		SDL_Delay(1000/60);
 	}
-	} catch(const std::exception& exception) {
-		PLOG_ERROR << "ERROR " << exception.what();
-	}
-
 
 	return 0;
 }
@@ -109,7 +104,7 @@ int main(int argc, char **args) {
 	PLOG_INFO << "Rendering " << graphs.size() << " graphs.";
 
 	screenWidth.store((BAR_WIDTH+HORIZONTAL_SPACING)*(graphs.size() > 1 ? 2 : 1));
-	screenHeight.store((BAR_HEIGHT+VERTICAL_SPACING)*std::ceil(((graphs.size() + 1) / 2)) + VERTICAL_SPACING / 2);
+	screenHeight.store((BAR_HEIGHT+VERTICAL_SPACING)*std::ceil(((graphs.size() + 1) / 2)) + (VERTICAL_SPACING*2));
 
 	window = SDL_CreateWindow("osview", SDL_WINDOWPOS_CENTERED,
 														          SDL_WINDOWPOS_CENTERED,

@@ -25,13 +25,14 @@ const size_t BAR_X = 10;
 const size_t BAR_Y = 40;
 const size_t BAR_SCALE = 4;
 const size_t BAR_WIDTH = 380;
-const size_t BAR_HEIGHT = 50;
-const size_t POLL_TIME = 250;
+const size_t BAR_HEIGHT = 30;
+const size_t TARGET_TIME = 60;
 const size_t BAND_WIDTH = 4;
 const size_t TOTAL_BANDS = BAR_WIDTH / BAND_WIDTH;
 const size_t COLUMN_COUNT = 2;
+const size_t POLL_TIME = (TARGET_TIME*1000)/TOTAL_BANDS;
 
-const size_t VERTICAL_SPACING = 50;
+const size_t VERTICAL_SPACING = 35;
 const size_t HORIZONTAL_SPACING = 50;
 
 // Description:

@@ -2,6 +2,8 @@
 
 #include "graph.hh"
 
+std::mutex dataLock, bandLock;
+
 inline void drawTextWithShadow(SDL_Renderer *render, std::string msg, NFont &font, int x, int y, NFont::Color col) {
 	font.draw(render, x + 2, y + 2, NFont::Color(0, 0, 0, 255), msg.c_str());
 	font.draw(render, x, y, col, msg.c_str());
@@ -22,6 +24,7 @@ void Graph::draw(SDL_Point pos, SDL_Texture *barTexture, NFont &font, SDL_Render
   SDL_RenderDrawRect(render, &barRect);
 
   if (isVertical) {
+    std::lock_guard<std::mutex> lock(bandLock);
     for (size_t i = 0; i < bands.size(); ++i) {
       if (isBandEmpty(bands[i])) continue;
 
@@ -40,6 +43,7 @@ void Graph::draw(SDL_Point pos, SDL_Texture *barTexture, NFont &font, SDL_Render
     }
   } else {
     auto previousWidth = 0;
+    std::lock_guard<std::mutex> lock(dataLock);
     for (const auto& [key, width] : data) {
       if (width == 0) continue;
       SDL_Rect rect {previousWidth + pos.x, pos.y, width, BAR_HEIGHT};
@@ -87,6 +91,7 @@ void Graph::draw(SDL_Point pos, SDL_Texture *barTexture, NFont &font, SDL_Render
 // Result:
 // - none
 void Graph::setData(std::string key, signed amount) {
+  std::lock_guard<std::mutex> lock(dataLock);
   data[key] = amount;
 }
 
@@ -98,6 +103,7 @@ void Graph::setData(std::string key, signed amount) {
 // Result:
 // - none
 void Graph::addBand(Band&& band) {
+  std::lock_guard<std::mutex> lock(bandLock);
   if (bands.size() >= TOTAL_BANDS) {
     for (size_t i = bands.size() - 1; i > 0; --i) {
       bands[i] = bands[i - 1];
@@ -129,6 +135,7 @@ void Graph::toggleVertical() {
 // - the index of the first empty band
 size_t Graph::getFilledBandSize() {
   size_t result = 0;
+  std::lock_guard<std::mutex> lock(bandLock);
   for (auto b : bands) {
     if (isBandEmpty(b)) break;
     result++;

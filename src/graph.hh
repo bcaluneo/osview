@@ -16,6 +16,7 @@
 #include <plog/Log.h>
 #include "NFont.h"
 #include <map>
+#include <mutex>
 
 #ifndef GRAPH_HH
 #define GRAPH_HH
