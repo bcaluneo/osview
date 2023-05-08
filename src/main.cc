@@ -114,7 +114,7 @@ int main(int argc, char **args) {
 	render = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
 	SDL_EventState(SDL_SYSWMEVENT, SDL_ENABLE);
 
-	SDL_Surface *icon = IMG_Load("tex/icon.png");
+	SDL_Surface *icon = IMG_Load("resources/icon.png");
 	SDL_SetWindowIcon(window, icon);
 	SDL_FreeSurface(icon);
 

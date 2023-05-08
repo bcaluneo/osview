@@ -7,12 +7,13 @@ tool is below: <br/>
 
 ## Modern Alternative
 
-Here are some screenshots of my tool as it stands: <br/>
-![Screenshot of osview](screenshots/prev.png)
+This programs features support for multi-core systems along with memory reporting.
+
+![Screenshot of osview](screenshots/prev3.png)
 <br/>
-![Screenshot of osview](screenshots/prev2.png)
+![Screenshot of osview](screenshots/prev4.png)
 <br/>
-This program measures the amount of time the system has been executing tasks in kernel mode, user mode, and the amount of time that it has spent idling. By default it polls this information every 150ms. More information can be found in the Windows Dev Center; specifically, [here](https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getsystemtimes). All the rendering is handled using the SDL2 library.
+This program measures the amount of time the system has been executing tasks in kernel mode, user mode, and the amount of time that it has spent idling. The polling time is variable, by default it is set to a value that allows the vertical graph to display the previous 60 seconds of information. The data poller makes use of two Win32 API functions: [NtQuerySystemInformation](https://learn.microsoft.com/en-us/windows/win32/api/winternl/nf-winternl-ntquerysysteminformation) and [GlobalMemoryStatusEx](https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-globalmemorystatusex);
 
 ## Building
 
