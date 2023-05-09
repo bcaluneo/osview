@@ -65,13 +65,11 @@ int getData(void *data) {
 			ULARGE_INTEGER totalBytes, freeBytes;
 			auto isSuccess = GetDiskFreeSpaceExA(drive.c_str(), nullptr, &totalBytes, &freeBytes);
 			if (isSuccess) {
-				driveUsageMap.insert(std::make_pair(drive, std::make_pair(freeBytes.QuadPart, totalBytes.QuadPart)));
+				driveUsageMap.insert(std::make_pair(drive, std::make_pair(totalBytes.QuadPart - freeBytes.QuadPart, totalBytes.QuadPart)));
 			} else {
 				PLOG_ERROR << "Failed to retrieve disk usage information with error code " << GetLastError();
 			}
 		}
-
-		PLOG_INFO << "diskUsageMap = " << driveUsageMap;
 
 		std::lock_guard<std::mutex> lock(graphLock);
 		for (size_t i = 0; i < graphs.size(); ++i) {
